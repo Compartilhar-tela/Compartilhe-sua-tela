@@ -35,6 +35,7 @@ button{font:inherit;cursor:pointer;color:var(--ink)}
 button:disabled{opacity:.45;cursor:not-allowed}
 button:hover:not(:disabled){filter:brightness(1.12)}
 :focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+.chip select:focus-visible{outline:none;box-shadow:none}
 .hidden{display:none!important}
 /* barra de cima */
 .top{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:12px 24px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap}
@@ -84,10 +85,13 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
 .pillbtn{padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:#1a1f3d;font-weight:600}
 .pillbtn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .pillbtn.danger{border-color:#5a2a38;background:#2a1722;color:#ffb3bd}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;font-size:13px}
+ .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;font-size:13px}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#161b34}
-.chip select{appearance:none;-webkit-appearance:none;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239aa0c7' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right center;border:0;color:var(--ink);font:inherit;font-weight:600;cursor:pointer;padding:0 16px 0 0}
-.chip select option{background:#161b34;color:var(--ink)}
+.chip span{color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.02em}
+.chip select{appearance:none;-webkit-appearance:none;background-color:#20264a;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c0baff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;border:3px solid rgba(138,125,255,.48);border-radius:10px;color:var(--ink);font:inherit;font-weight:700;cursor:pointer;padding:10px 40px 10px 18px;outline:none;box-shadow:none;transition:border-color .18s ease}
+.chip select:hover{border-color:rgba(138,125,255,.85)}
+.chip select:focus,.chip select:focus-visible{border:4px solid #8a7dff;outline:none;box-shadow:0 0 0 2px rgba(138,125,255,.18)}
+.chip select option{background:#20264a;color:var(--ink);padding:14px 20px;font-weight:600}
 /* coluna lateral */
 .card{padding:18px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
 .ctitle{font-weight:700;margin-bottom:12px}
@@ -162,7 +166,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         <label class="chip"><select id="selFps" aria-label="Fluidez"><option value="30">30 fps</option><option value="60" selected>60 fps</option></select></label>
         <label class="chip"><select id="selMode" aria-label="Modo"><option value="auto">Modo Automático</option><option value="game" selected>Modo Jogo</option><option value="text">Modo Texto</option></select></label>
         <label class="chip"><span>Limite via servidor</span><select id="selRelay"><option value="2000">2 Mbps</option><option value="3000">3 Mbps</option><option value="4000" selected>4 Mbps</option><option value="6000">6 Mbps</option><option value="10000">10 Mbps</option><option value="0">Sem limite</option></select></label>
-        <label class="chip hidden" id="viewopts"><span>Suavidade</span><select id="selBuf"><option value="0">Mínima</option><option value="150">Equilibrada</option><option value="400" selected>Suave</option></select></label>
+        <label class="chip hidden" id="viewopts"><span>Suavidade</span><select id="selBuf"><option value="0" selected>Mínima</option><option value="150">Equilibrada</option><option value="400">Suave</option></select></label>
       </div>
     </section>
 
@@ -333,10 +337,10 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       w.textContent="⛔ A cota do TURN acabou (estimativa: "+usado+"). Novas sessões só funcionam com conexão direta, e quem estiver em rede restrita, como dados móveis, pode não conseguir ver a tela.";
     }else if(fr>=0.9){
       w.className="warn l2";
-      w.textContent="⚠ Cota do TURN quase no fim: "+pct+"% usada ("+usado+"). A qualidade das conexões pelo servidor está limitada a 1,5 Mbps.";
+      w.textContent="⚠ Cota do TURN quase no fim: "+pct+"% usada ("+usado+"). A conexão pelo servidor pode ficar indisponível quando a cota acabar.";
     }else{
       w.className="warn l1";
-      w.textContent="⚠ Atenção: "+pct+"% da cota do TURN já foi usada neste mês ("+usado+"). A qualidade das conexões pelo servidor foi reduzida para 3 Mbps para economizar.";
+      w.textContent="⚠ Atenção: "+pct+"% da cota do TURN já foi usada neste mês ("+usado+"). A qualidade não será reduzida automaticamente por este aviso.";
     }
   }
   function addRelay(delta){
@@ -354,8 +358,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     }
     return {config:{iceServers:ice},debug:0};
   }
-  var lastTier=0;
-
   function watchIce(call, onFail){
     var pc = call && call.peerConnection;
     if(!pc) return;
@@ -439,8 +441,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     var q=qual(), kbps=q.kbps, cap=+$("selRelay").value;
     if(c._relay){
       if(cap>0) kbps=Math.min(kbps,cap);
-      var fr=quotaFrac();
-      if(fr>=0.9) kbps=Math.min(kbps,1500); else if(fr>=0.7) kbps=Math.min(kbps,3000);
     }
     c._kbps=kbps;
     pc.getSenders().forEach(function(sn){
@@ -449,7 +449,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         var pr=sn.getParameters();
         if(!pr.encodings||!pr.encodings.length) return;
         pr.encodings[0].maxBitrate=kbps*1000;
-        pr.encodings[0].maxFramerate = (c._relay && kbps<=4000) ? Math.min(q.f,30) : q.f;
+        pr.encodings[0].maxFramerate = q.f;
         pr.encodings[0].active=!c._paused;
         pr.degradationPreference = q.mode==="game" ? "maintain-framerate" : (q.mode==="text" ? "maintain-resolution" : "balanced");
         sn.setParameters(pr).catch(function(){});
@@ -527,11 +527,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       }catch(e){}
     }
     relayGuard();
-    var fr=quotaFrac(), tier=fr>=0.9?2:(fr>=0.7?1:0);
-    if(tier!==lastTier){
-      lastTier=tier; calls.forEach(tuneCall);
-      if(tier>0) setMsg("Cota do TURN em "+Math.round(fr*100)+"% (estimativa). A qualidade das conexões pelo servidor foi reduzida para economizar.");
-    }
     updateHostStatus(); renderMembers();
   }
 
