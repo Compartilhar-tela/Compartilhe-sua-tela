@@ -3,7 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compartilha – compartilhe sua tela ao vivo</title>
+<title>Compartilhe sua tela</title>
+<meta name="description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
+<meta name="theme-color" content="#6d5df0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238e80ff'/%3E%3Cstop offset='1' stop-color='%235442e0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Crect x='14' y='17' width='36' height='24' rx='4' fill='none' stroke='white' stroke-width='4'/%3E%3Cpath d='M32 41v7M24 48h16' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Compartilhe sua tela">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Compartilhe sua tela">
+<meta property="og:description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
+<meta property="og:url" content="https://compartilhar-tela.github.io/Compartilhar.tela/">
+<meta property="og:image" content="https://compartilhar-tela.github.io/Compartilhar.tela/preview.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Compartilhe sua tela: logo roxo com um monitor">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Compartilhe sua tela">
+<meta name="twitter:description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
+<meta name="twitter:image" content="https://compartilhar-tela.github.io/Compartilhar.tela/preview.png">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 :root{
@@ -16,85 +34,90 @@ body{
   font-family:Inter,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);min-height:100vh;
   background:radial-gradient(900px 500px at 50% -10%,#2a2470 0%,rgba(42,36,112,0) 70%),var(--bg);
 }
-.wrap{max-width:1080px;margin:0 auto;padding:28px 24px 48px}
-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+/* barra superior */
+.top{display:flex;align-items:center;gap:16px;padding:12px 24px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:12px}
-.brand .ico{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#7a6bff,#5a49e0);display:grid;place-items:center}
+.brand .ico{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#7a6bff,#5a49e0);display:grid;place-items:center}
 .brand .ico i{width:16px;height:14px;border:2.5px solid #fff;border-radius:3px;display:block}
-.brand b{font-size:1.3rem;letter-spacing:-.01em}
-.brand small{color:var(--accent2);font-weight:700;font-size:.72rem;margin-left:4px}
-.safe{color:var(--muted);font-size:.9rem}
-.hero{text-align:center;margin:44px 0 36px}
-.pill{display:inline-block;border:1px solid var(--line);background:rgba(109,93,240,.14);color:#d9d6ff;border-radius:999px;padding:7px 16px;font-size:.78rem;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
-h1{font-size:clamp(2.2rem,6vw,3.8rem);letter-spacing:-.04em;line-height:1.05;margin:22px 0 14px;font-weight:800}
-.hero p{margin:0;color:var(--muted);font-size:1.05rem}
-.grid{display:grid;grid-template-columns:1.45fr 1fr;gap:20px;align-items:start}
-@media (max-width:860px){.grid{grid-template-columns:1fr}}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px}
-.phead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 22px;border-bottom:1px solid var(--line)}
-.phead h2{margin:0;font-size:1.05rem}
-.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.92rem}
-.status::before{content:"";width:9px;height:9px;border-radius:50%;background:#5b6190}
-.status.on::before{background:var(--green);box-shadow:0 0 0 4px rgba(46,204,143,.18)}
-.stage{margin:14px;border-radius:12px;background:#05060f;aspect-ratio:16/9;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.brand b{font-size:1.25rem;letter-spacing:-.01em}
+.brand small{color:var(--accent2);font-weight:700;font-size:.7rem;margin-left:2px}
+.search{display:flex;flex:1;max-width:520px;margin:0 auto}
+.search input{border-radius:999px 0 0 999px;padding:11px 18px}
+.search button{border-radius:0 999px 999px 0;border-left:0;padding:0 22px}
+button.pill{border-radius:999px}
+/* conteúdo */
+.wrap{max-width:1360px;margin:0 auto;padding:24px 24px 40px}
+.main{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.col-main{flex:1 1 640px;min-width:0}
+.col-side{flex:0 1 380px;min-width:300px;display:flex;flex-direction:column;gap:16px}
+/* player */
+.stage{border-radius:14px;background:#05060f;aspect-ratio:16/9;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.stage:fullscreen{aspect-ratio:auto;border-radius:0}
 .stage video{width:100%;height:100%;object-fit:contain;background:#05060f}
 .stage .ph{position:absolute;text-align:center;color:var(--muted);padding:24px;max-width:36ch}
 .stage .ph svg{display:block;margin:0 auto 10px;opacity:.7}
-.actions{display:flex;gap:10px;flex-wrap:wrap;padding:6px 22px 8px}
+.livebadge{position:absolute;left:16px;top:16px;padding:5px 12px;border-radius:6px;background:#e5383b;color:#fff;font-weight:800;font-size:.8rem;z-index:1}
+.ctrlbar{position:absolute;left:0;right:0;bottom:0;padding:12px 16px;display:flex;align-items:center;gap:12px;background:linear-gradient(0deg,rgba(5,6,15,.88),rgba(5,6,15,0));z-index:1}
+.ctrlbar .status{color:#e8ebff}
+button.ctl{margin-left:auto;background:transparent;border:0;padding:6px;border-radius:8px;display:grid;place-items:center}
+.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.92rem}
+.status::before{content:"";width:9px;height:9px;border-radius:50%;background:#5b6190;flex:none}
+.status.on::before{background:var(--green);box-shadow:0 0 0 4px rgba(46,204,143,.18)}
+.col-main h1{font-size:1.4rem;letter-spacing:-.01em;line-height:1.2;margin:16px 0 6px;font-weight:800}
+.msg{padding:0;margin:0;color:var(--muted);font-size:.95rem}
+.msg.err{color:#ff9aa6}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.quality{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:.9rem}
+.quality label{display:flex;align-items:center;gap:8px}
+.quality select{font:inherit;font-weight:600;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--ink)}
+/* controles gerais */
 button{font:inherit;font-weight:700;cursor:pointer;border-radius:11px;padding:12px 18px;border:1px solid var(--line);color:var(--ink);background:#1a1f3d}
 button.primary{background:linear-gradient(180deg,#7a6bff,#5f4fe6);border-color:#8a7dff}
 button.stop{background:#2a1722;border-color:#5a2a38;color:#ffb3bd}
 button:hover:not(:disabled){filter:brightness(1.12)}
 button:disabled{opacity:.45;cursor:not-allowed}
 :focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
-.msg{padding:10px 22px 22px;color:var(--muted);font-size:.95rem;margin:0}
-.msg.err{color:#ff9aa6}
-.side{padding:22px}
-.side h2{margin:0 0 6px;font-size:1.05rem}
-.side p{margin:0 0 16px;color:var(--muted);font-size:.95rem}
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
-.tabs button{background:var(--panel2)}
-.tabs button[aria-selected="true"]{background:#2b2570;border-color:#7a6bff}
-.label{font-weight:700;font-size:.95rem;margin:0 0 8px}
-.row{display:flex;gap:10px}
 input{flex:1;min-width:0;font:inherit;padding:13px 14px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:600;letter-spacing:.08em}
 input::placeholder{letter-spacing:0;font-weight:400;color:#6c7199}
+/* coluna lateral */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.side{padding:20px}
+.side h2{margin:0 0 6px;font-size:1.05rem}
+.side p{margin:0 0 16px;color:var(--muted);font-size:.95rem}
+.label{font-weight:700;font-size:.95rem;margin:0 0 8px}
+.row{display:flex;gap:10px}
 .hint{color:var(--muted);font-size:.92rem;margin:12px 0 0}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent2);font-weight:600;cursor:pointer;margin-top:8px;font-size:.92rem}
-.note{margin-top:18px;border:1px solid #5a4824;background:rgba(217,164,65,.08);border-radius:12px;padding:14px 16px;font-size:.92rem;color:#e8dcc0}
+.note{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:16px;font-size:.92rem;color:#d7dbf3;line-height:1.5}
 .foot{text-align:center;color:var(--muted);font-size:.88rem;margin-top:34px}
-.quality{display:flex;gap:16px;flex-wrap:wrap;padding:4px 22px 12px;color:var(--muted);font-size:.9rem}
-.quality label{display:flex;align-items:center;gap:8px}
-.quality select{font:inherit;font-weight:600;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--ink)}
-.warn{border:1px solid;border-radius:12px;padding:12px 16px;margin:22px 0 0;font-size:.95rem;font-weight:600}
+.warn{border:1px solid;border-radius:12px;padding:12px 16px;margin:0 0 20px;font-size:.95rem;font-weight:600}
 .warn.l1{border-color:#8a6d1f;background:rgba(217,164,65,.14);color:#f2dfae}
 .warn.l2{border-color:#a8531f;background:rgba(255,140,60,.14);color:#ffd2b0}
 .warn.l3{border-color:#a02a3a;background:rgba(255,90,106,.16);color:#ffc2ca}
 .hidden{display:none!important}
+@media (max-width:760px){
+  .search{order:3;flex-basis:100%;max-width:none}
+  .top{padding:12px 16px}
+  .wrap{padding:16px 16px 32px}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand"><span class="ico"><i></i></span><b>Compartilha</b><small>AO VIVO</small></div>
-    <div class="safe">🔒 Você controla quando compartilhar</div>
-  </header>
+<header class="top">
+  <div class="brand"><span class="ico"><i></i></span><b>Compartilha</b><small>AO VIVO</small></div>
+  <div class="search" role="search">
+    <input id="codeIn" maxlength="3" placeholder="Digite o código da sessão" aria-label="Código da sessão" autocomplete="off" style="text-transform:uppercase">
+    <button id="btnJoin">Entrar</button>
+  </div>
+  <button class="primary pill" id="btnStart">+ Compartilhar tela</button>
+</header>
 
+<div class="wrap">
   <div id="quotaWarn" class="warn hidden" role="alert"></div>
 
-  <section class="hero">
-    <span class="pill">Compartilhamento remoto</span>
-    <h1>Mostre sua tela à distância.</h1>
-    <p>Crie uma sessão e envie seu código para a pessoa que vai assistir.</p>
-  </section>
-
-  <div class="grid">
-    <!-- TRANSMISSÃO -->
-    <section class="panel">
-      <div class="phead">
-        <h2 id="stageTitle">Transmissão</h2>
-        <span class="status" id="status">Pronto para transmitir</span>
-      </div>
+  <div class="main">
+    <!-- PLAYER -->
+    <section class="col-main">
       <div class="stage" id="stage">
         <video id="video" autoplay playsinline muted></video>
         <button class="primary hidden" id="playBtn" style="position:absolute;z-index:2">▶ Toque para ver a tela</button>
@@ -102,7 +125,23 @@ input::placeholder{letter-spacing:0;font-weight:400;color:#6c7199}
           <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
           <span id="phText">Sua tela vai aparecer aqui quando você iniciar.</span>
         </div>
+        <span class="livebadge hidden" id="liveBadge">AO VIVO</span>
+        <div class="ctrlbar">
+          <span class="status" id="status">Pronto para transmitir</span>
+          <button class="ctl" id="btnFull" disabled aria-label="Tela cheia" title="Tela cheia">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          </button>
+        </div>
       </div>
+
+      <h1 id="stageTitle">Transmissão</h1>
+      <p class="msg" id="msg">Clique em Compartilhar tela, escolha o que mostrar e envie o código gerado.</p>
+
+      <div class="actions">
+        <button id="btnSwitch" disabled>Trocar tela</button>
+        <button class="stop" id="btnStop" disabled>■ Encerrar</button>
+      </div>
+
       <div class="quality" id="quality">
         <label>Resolução
           <select id="selRes"><option value="480">480p</option><option value="720" selected>720p</option></select>
@@ -122,51 +161,34 @@ input::placeholder{letter-spacing:0;font-weight:400;color:#6c7199}
           <select id="selBuf"><option value="0">Mínima (mais rápido)</option><option value="150">Equilibrada</option><option value="400" selected>Suave (mais fluida)</option></select>
         </label>
       </div>
-      <div class="actions">
-        <button class="primary" id="btnStart">🖥 Iniciar e compartilhar tela</button>
-        <button id="btnSwitch" disabled>🔄 Trocar tela</button>
-        <button class="stop" id="btnStop" disabled>■ Encerrar</button>
-        <button id="btnFull" disabled>⛶ Tela cheia</button>
-      </div>
-      <p class="msg" id="msg">Clique em iniciar, escolha o que mostrar e envie o código gerado.</p>
     </section>
 
-    <!-- CONECTAR -->
-    <aside class="panel side">
-      <h2>Conectar a uma sessão</h2>
-      <p>Uma pessoa transmite; a outra entra usando o código da sessão.</p>
-      <div class="tabs" role="tablist">
-        <button role="tab" id="tabHost" aria-selected="true">Transmitir</button>
-        <button role="tab" id="tabView" aria-selected="false">Assistir</button>
-      </div>
+    <!-- LATERAL -->
+    <aside class="col-side">
+      <div class="panel side">
+        <h2>Sua transmissão</h2>
+        <p>Compartilhe a tela e envie o código para quem vai assistir. Para assistir a alguém, digite o código na barra de cima.</p>
 
-      <div id="paneHost">
-        <div class="label">Seu código de transmissão</div>
-        <div class="row">
-          <input id="codeOut" readonly placeholder="Gerado ao iniciar" aria-label="Seu código de transmissão">
-          <button id="btnCopy" disabled>Copiar</button>
+        <div id="paneHost">
+          <div class="label">Seu código de transmissão</div>
+          <div class="row">
+            <input id="codeOut" readonly placeholder="Gerado ao iniciar" aria-label="Seu código de transmissão">
+            <button id="btnCopy" disabled>Copiar</button>
+          </div>
+          <p class="hint">Clique em Compartilhar tela para criar o código. Envie-o apenas para quem deve assistir.</p>
+          <button class="linkbtn hidden" id="btnCopyLink">Copiar link direto</button>
         </div>
-        <p class="hint">Inicie o compartilhamento para criar o código. Envie-o apenas para quem deve assistir.</p>
-        <button class="linkbtn hidden" id="btnCopyLink">Copiar link direto</button>
-      </div>
 
-      <div id="paneView" class="hidden">
-        <div class="label">Código da sessão</div>
-        <div class="row">
-          <input id="codeIn" maxlength="3" placeholder="Digite o código" aria-label="Código da sessão" autocomplete="off" style="text-transform:uppercase">
-          <button class="primary" id="btnJoin">Entrar</button>
-        </div>
-        <p class="hint">Peça o código para quem está transmitindo.</p>
       </div>
 
       <div class="note"><b>Compatibilidade:</b> use um navegador atualizado e abra o site por HTTPS. A conexão pode falhar em algumas redes restritivas sem um servidor TURN configurado.
         <div id="turnTest" style="margin-top:10px;font-weight:600"></div>
         <button class="linkbtn" id="btnTurn">Testar conexão mundial</button>
-</div>
+      </div>
     </aside>
   </div>
 
-  <p class="foot">O navegador sempre pede autorização antes de capturar a tela. Encerre a sessão quando terminar.</p>
+  <p class="foot">🔒 Você controla quando compartilhar. O navegador sempre pede autorização antes de capturar a tela. Encerre a sessão quando terminar.</p>
 </div>
 
 <script>
@@ -519,7 +541,7 @@ input::placeholder{letter-spacing:0;font-weight:400;color:#6c7199}
     }
     updateHostStatus();
   }
-  function setStatus(text, on){ var s=$("status"); s.textContent=text; s.classList.toggle("on", !!on); }
+  function setStatus(text, on){ var s=$("status"); s.textContent=text; s.classList.toggle("on", !!on); $("liveBadge").classList.toggle("hidden", !on); }
   function setMsg(text, err){ var m=$("msg"); m.textContent=text; m.classList.toggle("err", !!err); }
   function randomCode(){
     var a=new Uint32Array(3); crypto.getRandomValues(a);
@@ -541,18 +563,13 @@ input::placeholder{letter-spacing:0;font-weight:400;color:#6c7199}
   function selectMode(m){
     if(active) stopAll();
     mode=m;
-    $("tabHost").setAttribute("aria-selected", m==="host");
-    $("tabView").setAttribute("aria-selected", m==="view");
-    $("paneHost").classList.toggle("hidden", m!=="host");
-    $("paneView").classList.toggle("hidden", m!=="view");
-    $("btnStart").classList.toggle("hidden", m!=="host");
     $("btnSwitch").classList.toggle("hidden", m!=="host");
     $("quality").classList.toggle("hidden", m!=="host");
     $("viewopts").classList.toggle("hidden", m!=="view");
     $("stageTitle").textContent = m==="host" ? "Transmissão" : "Visualização";
     $("phText").textContent = m==="host" ? "Sua tela vai aparecer aqui quando você iniciar." : "A tela de quem transmite vai aparecer aqui.";
     setStatus(m==="host" ? "Pronto para transmitir" : "Aguardando código", false);
-    setMsg(m==="host" ? "Clique em iniciar, escolha o que mostrar e envie o código gerado." : "Digite o código recebido e clique em Entrar.");
+    setMsg(m==="host" ? "Clique em Compartilhar tela, escolha o que mostrar e envie o código gerado." : "Digite o código na barra de cima e clique em Entrar.");
   }
   function resetUI(){
     $("video").srcObject=null; $("ph").classList.remove("hidden");
@@ -571,8 +588,10 @@ input::placeholder{letter-spacing:0;font-weight:400;color:#6c7199}
     resetUI();
   }
   function end(statusText,msg,err){
+    var wasView=(mode==="view");
     stopAll(); everLive=false; reconnects=0;
     history.replaceState(null,"",baseUrl());
+    if(wasView){ selectMode("host"); statusText="Pronto para transmitir"; }
     setStatus(statusText,false); setMsg(msg,err);
   }
 
@@ -645,7 +664,7 @@ input::placeholder{letter-spacing:0;font-weight:400;color:#6c7199}
         return;
       }
       end("Pronto para transmitir", currentCode
-        ? "A sessão foi interrompida ("+err.type+"). Clique em iniciar para criar outra."
+        ? "A sessão foi interrompida ("+err.type+"). Clique em Compartilhar tela para criar outra."
         : "Não foi possível criar a sessão ("+err.type+"). Verifique a internet e tente de novo.", true);
     });
     peer.on("open",function(){
@@ -828,17 +847,30 @@ input::placeholder{letter-spacing:0;font-weight:400;color:#6c7199}
   refreshCf().then(autoTest);
 
   /* ---------- EVENTOS ---------- */
-  $("tabHost").onclick=function(){ if(mode!=="host") selectMode("host"); };
-  $("tabView").onclick=function(){ if(mode!=="view") selectMode("view"); };
-  $("btnStart").onclick=startHost;
+  $("btnStart").onclick=function(){
+    if(mode!=="host"){
+      if(active && !confirm("Isso vai sair da sessão que você está assistindo. Continuar?")) return;
+      selectMode("host");
+    }
+    startHost();
+  };
   $("btnStop").onclick=function(){
     if(mode==="host") end("Pronto para transmitir","Transmissão encerrada.");
     else end("Aguardando código","Você saiu da sessão.");
   };
   $("btnCopy").onclick=function(){ copy($("codeOut").value,this); };
   $("btnCopyLink").onclick=function(){ copy(baseUrl()+"#"+currentCode,this); };
-  $("btnJoin").onclick=function(){ reconnects=0; join($("codeIn").value); };
-  $("codeIn").addEventListener("keydown",function(e){ if(e.key==="Enter") join(this.value); });
+  function tryJoin(raw){
+    var c=(raw||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+    if(c.length!==3){ return setMsg("O código tem 3 letras ou números.",true); }
+    if(mode!=="view"){
+      if(active && !confirm("Isso vai encerrar a sua transmissão. Continuar?")) return;
+      selectMode("view");
+    }
+    reconnects=0; join(raw);
+  }
+  $("btnJoin").onclick=function(){ tryJoin($("codeIn").value); };
+  $("codeIn").addEventListener("keydown",function(e){ if(e.key==="Enter") tryJoin(this.value); });
   $("btnFull").onclick=function(){
     var el=$("stage");
     if(document.fullscreenElement) document.exitFullscreen(); else if(el.requestFullscreen) el.requestFullscreen();
