@@ -61,10 +61,16 @@ button:hover:not(:disabled){filter:brightness(1.12)}
 .tiles.n2{grid-template-columns:1fr 1fr}
 .tiles.n3,.tiles.n4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
 .tiles.n5{grid-template-columns:repeat(3,1fr)}
+.tiles.has-local-remote .tile:not([data-local="true"]){position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.tiles.has-local-remote .tile:not([data-local="true"]) video{width:100%;height:100%;object-fit:contain}
+.tiles.has-local-remote .tile[data-local="true"]{position:absolute;right:16px;bottom:16px;top:auto;left:auto;width:clamp(120px,22%,260px);height:auto;aspect-ratio:16/9;z-index:4;border:2px solid rgba(255,255,255,.8);border-radius:10px;box-shadow:0 8px 24px #0008}
+.tiles.has-local-remote .tile[data-local="true"] video{object-fit:contain}
 .tile{position:relative;min-width:0;min-height:0;overflow:hidden;background:#05060f}
 .tile video{width:100%;height:100%;object-fit:contain;display:block}
-.tile .tag{position:absolute;left:10px;bottom:60px;padding:3px 9px;border-radius:6px;background:rgba(5,6,15,.72);font-size:12px;font-weight:600}
+.tile .tag{position:absolute;left:10px;bottom:12px;padding:3px 9px;border-radius:6px;background:rgba(5,6,15,.72);font-size:12px;font-weight:600}
 .tiles.n1 .tag{display:none}
+.tile-hide{position:absolute;right:7px;top:7px;z-index:5;width:28px;height:28px;padding:0;border:1px solid #ffffff66;border-radius:50%;background:#090b18d9;color:#fff;font-size:20px;line-height:1;display:grid;place-items:center}
+.tiles.n1 .tile-hide{display:none}
 .ph{position:absolute;text-align:center;color:var(--muted);padding:24px;max-width:44ch;line-height:1.5}
 .ph svg{display:block;margin:0 auto 10px;opacity:.7}
 .livebadge{position:absolute;left:3%;top:4%;padding:5px 12px;border-radius:6px;background:#e5383b;color:#fff;font-weight:800;font-size:13px;z-index:2}
@@ -143,6 +149,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         <span class="livebadge hidden" id="liveBadge">AO VIVO</span>
         <div class="ctrlbar">
           <button class="ico-btn" id="btnPlay" aria-label="Pausar ou continuar"><svg id="icoPlay" width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg></button>
+          <button class="ico-btn hidden" id="btnRestoreMe" aria-label="Mostrar minha transmissão" title="Mostrar minha transmissão"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4M8 10l3 3 5-5"/></svg></button>
           <button class="ico-btn" id="btnMute" aria-label="Som"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9zM17 8a5 5 0 010 8"/></svg></button>
           <span class="status" id="status">Pronto para transmitir</span>
           <button class="ico-btn right" id="btnFull" disabled aria-label="Tela cheia"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
@@ -166,7 +173,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         <label class="chip"><select id="selFps" aria-label="Fluidez"><option value="30">30 fps</option><option value="60" selected>60 fps</option></select></label>
         <label class="chip"><select id="selMode" aria-label="Modo"><option value="auto">Modo Automático</option><option value="game" selected>Modo Jogo</option><option value="text">Modo Texto</option></select></label>
         <label class="chip"><span>Limite via servidor</span><select id="selRelay"><option value="2000">2 Mbps</option><option value="3000">3 Mbps</option><option value="4000" selected>4 Mbps</option><option value="6000">6 Mbps</option><option value="10000">10 Mbps</option><option value="0">Sem limite</option></select></label>
-        <label class="chip hidden" id="viewopts"><span>Suavidade</span><select id="selBuf"><option value="0" selected>Mínima</option><option value="150">Equilibrada</option><option value="400">Suave</option></select></label>
+        <label class="chip"><span>Delay</span><select id="selBuf"><option value="0" selected>0 ms</option><option value="50">50 ms</option><option value="100">100 ms</option><option value="200">200 ms</option></select></label>
       </div>
     </section>
 
@@ -438,10 +445,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
   function tuneCall(c){
     var pc=c&&c.peerConnection; if(!pc) return;
-    var q=qual(), kbps=q.kbps, cap=+$("selRelay").value;
-    if(c._relay){
-      if(cap>0) kbps=Math.min(kbps,cap);
-    }
+    var q=qual(), kbps=30000;
     c._kbps=kbps;
     pc.getSenders().forEach(function(sn){
       if(!sn.track||sn.track.kind!=="video") return;
@@ -557,9 +561,20 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   function nMembers(){ return Object.keys(members).length; }
 
   /* ---------- quadros de vídeo (um por pessoa que transmite) ---------- */
+  var localTileHidden=false;
   function layout(){
-    var n=Object.keys(tiles).length;
-    $("tiles").className="tiles n"+(n>4?5:n);
+    var all=Object.keys(tiles), visible=all.filter(function(k){return !(k==="me"&&localTileHidden);});
+    var remote=visible.filter(function(k){return k!=="me";}).length;
+    if(remote===0) localTileHidden=false;
+    var n=Object.keys(tiles).filter(function(k){return !(k==="me"&&localTileHidden);}).length, box=$("tiles");
+    box.className="tiles n"+(n>4?5:n)+(stream&&remote>0&&visible.indexOf("me")!==-1?" has-local-remote":"");
+    Object.keys(tiles).forEach(function(k){
+      tiles[k].el.classList.toggle("hidden",k==="me"&&localTileHidden);
+      if(k==="me") tiles[k].el.dataset.local="true";
+      var close=tiles[k].el.querySelector(".tile-hide");
+      if(close) close.classList.toggle("hidden",!(k==="me"&&remote>0&&!localTileHidden));
+    });
+    $("btnRestoreMe").classList.toggle("hidden",!(localTileHidden&&!!stream&&remote>0));
     $("ph").classList.toggle("hidden", n>0);
     $("btnFull").disabled = n===0;
     renderHeader();
@@ -569,7 +584,13 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     var el=document.createElement("div"); el.className="tile";
     var v=document.createElement("video"); v.autoplay=true; v.playsInline=true; if(key==="me") v.muted=true;
     var tag=document.createElement("span"); tag.className="tag"; tag.textContent=label||"";
-    el.appendChild(v); el.appendChild(tag); $("tiles").appendChild(el);
+    el.appendChild(v); el.appendChild(tag);
+    if(key==="me"){
+      el.dataset.local="true";
+      var close=document.createElement("button"); close.className="tile-hide hidden"; close.type="button"; close.textContent="×"; close.setAttribute("aria-label","Ocultar minha transmissão"); close.title="Ocultar minha transmissão";
+      close.onclick=function(e){e.stopPropagation();localTileHidden=true;layout();}; el.appendChild(close);
+    }
+    $("tiles").appendChild(el);
     tiles[key]={el:el,video:v,tag:tag};
     layout();
     return tiles[key];
@@ -622,7 +643,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     $("codeOut").value=roomCode;
     $("btnCopyLink").classList.toggle("hidden",!roomCode);
     $("btnJoin").disabled=joining;
-    $("viewopts").classList.toggle("hidden",!active);
   }
   function renderAll(){ renderHeader(); renderMembers(); syncButtons(); }
   function updateHostStatus(){
@@ -636,7 +656,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     calls.forEach(function(c){try{c.close()}catch(e){}});
     Object.keys(incoming).forEach(function(k){ try{incoming[k].close()}catch(e){} });
     conns.forEach(function(c){try{c.close()}catch(e){}});
-    calls=[]; conns=[]; incoming={}; members={}; names={};
+    calls=[]; conns=[]; incoming={}; members={}; names={}; localTileHidden=false;
     if(stream){ stream.getTracks().forEach(function(t){t.stop()}); stream=null; }
     Object.keys(tiles).forEach(function(k){ removeTile(k); });
     gotStream=false; idlePaused=false; $("playBtn").textContent="▶ Toque para ver a tela"; $("playBtn").classList.add("hidden");
@@ -931,9 +951,12 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
 
   /* ---------- espectador: estatísticas, reprodução e suavidade ---------- */
   function applyBuffer(){
-    var ms=+$("selBuf").value;
+    var control=$("selBuf");
+    if(!control) return;
+    var ms=Number(control.value)||0;
     Object.keys(incoming).forEach(function(id){
-      var call=incoming[id]; if(!call||!call.peerConnection) return;
+      var call=incoming[id];
+      if(!call||!call.peerConnection) return;
       call.peerConnection.getReceivers().forEach(function(r){
         if(r.track&&r.track.kind==="video"){
           try{ r.jitterBufferTarget=ms; }catch(e){}
@@ -994,7 +1017,13 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       }
     },1000);
   }
-  function remoteVideos(){ return Object.keys(tiles).filter(function(k){ return k!=="me"; }).map(function(k){ return tiles[k].video; }); }
+  // Controles de pausar/volume afetam somente transmissões recebidas de outras pessoas.
+  // Nunca inclua o vídeo local, identificado pela chave "me" ou pelo stream local.
+  function remoteVideos(){
+    return Object.keys(tiles).filter(function(k){
+      return k!=="me" && tiles[k] && tiles[k].video && tiles[k].video.srcObject!==stream;
+    }).map(function(k){ return tiles[k].video; });
+  }
   $("playBtn").onclick=function(){
     remoteVideos().forEach(function(v){ v.muted=userMuted; v.play().catch(function(){}); });
     this.classList.add("hidden");
@@ -1005,17 +1034,22 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     }
   };
   $("btnPlay").onclick=function(){
+    var videos=remoteVideos();
+    if(!videos.length) return;
     userPaused=!userPaused;
-    remoteVideos().forEach(function(v){ if(userPaused) v.pause(); else v.play().catch(function(){}); });
+    videos.forEach(function(v){
+      if(userPaused) v.pause();
+      else v.play().catch(function(){});
+    });
     $("icoPlay").innerHTML = userPaused ? '<path d="M7 4l13 8-13 8z"/>' : '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>';
   };
+  $("btnRestoreMe").onclick=function(){ localTileHidden=false; layout(); };
   $("btnMute").onclick=function(){
     userMuted=!userMuted;
     remoteVideos().forEach(function(v){ v.muted=userMuted; });
     this.classList.toggle("off",userMuted);
   };
   $("btnSwitch").onclick=switchScreen;
-  $("selBuf").onchange=applyBuffer;
   var hideTimer=null;
   document.addEventListener("visibilitychange",function(){
     if(!active||Object.keys(incoming).length===0) return;
@@ -1038,6 +1072,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
 
   renderQuota();
   $("selRelay").onchange=function(){ calls.forEach(tuneCall); };
+  $("selBuf").onchange=applyBuffer;
   $("selRes").onchange=applyQuality; $("selFps").onchange=applyQuality; $("selMode").onchange=applyQuality;
   $("btnTurn").onclick=function(){ refreshCf(true).then(testTurn); };
   refreshCf().then(autoTest);
