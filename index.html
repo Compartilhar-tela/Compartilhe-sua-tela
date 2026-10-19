@@ -13,7 +13,7 @@
 <meta property="og:title" content="Compartilhe sua tela">
 <meta property="og:description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
 <meta property="og:url" content="https://compartilhar-tela.github.io/Compartilhar.tela/">
-<meta property="og:image" content="https://compartilhar-tela.github.io/Compartilhar.tela/preview.png">
+<meta property="og:image" content="https://compartilhar-tela.github.io/Compartilhar.tela/preview.png?v=2">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -21,7 +21,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Compartilhe sua tela">
 <meta name="twitter:description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
-<meta name="twitter:image" content="https://compartilhar-tela.github.io/Compartilhar.tela/preview.png">
+<meta name="twitter:image" content="https://compartilhar-tela.github.io/Compartilhar.tela/preview.png?v=2">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -173,7 +173,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         <label class="chip"><select id="selFps" aria-label="Fluidez"><option value="30">30 fps</option><option value="60" selected>60 fps</option></select></label>
         <label class="chip"><select id="selMode" aria-label="Modo"><option value="auto">Modo Automático</option><option value="game" selected>Modo Jogo</option><option value="text">Modo Texto</option></select></label>
         <label class="chip"><span>Limite via servidor</span><select id="selRelay"><option value="2000">2 Mbps</option><option value="3000">3 Mbps</option><option value="4000" selected>4 Mbps</option><option value="6000">6 Mbps</option><option value="10000">10 Mbps</option><option value="0">Sem limite</option></select></label>
-        <label class="chip"><span>Delay</span><select id="selBuf"><option value="0" selected>0 ms</option><option value="50">50 ms</option><option value="100">100 ms</option><option value="200">200 ms</option></select></label>
       </div>
     </section>
 
@@ -951,9 +950,8 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
 
   /* ---------- espectador: estatísticas, reprodução e suavidade ---------- */
   function applyBuffer(){
-    var control=$("selBuf");
-    if(!control) return;
-    var ms=Number(control.value)||0;
+    /* Delay fixo em 0 ms: não há opção de configuração. */
+    var ms=0;
     Object.keys(incoming).forEach(function(id){
       var call=incoming[id];
       if(!call||!call.peerConnection) return;
@@ -1072,7 +1070,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
 
   renderQuota();
   $("selRelay").onchange=function(){ calls.forEach(tuneCall); };
-  $("selBuf").onchange=applyBuffer;
   $("selRes").onchange=applyQuality; $("selFps").onchange=applyQuality; $("selMode").onchange=applyQuality;
   $("btnTurn").onclick=function(){ refreshCf(true).then(testTurn); };
   refreshCf().then(autoTest);
