@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compartilha – compartilhe sua tela ao vivo</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{
+  --bg:#0b0d1f; --panel:#12162b; --panel2:#0e1124; --line:#272c52; --ink:#f3f4ff; --muted:#9aa0c7;
+  --accent:#6d5df0; --accent2:#8a7dff; --green:#2ecc8f; --red:#ff5a6a; --amber:#d9a441;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:Inter,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);min-height:100vh;
+  background:radial-gradient(900px 500px at 50% -10%,#2a2470 0%,rgba(42,36,112,0) 70%),var(--bg);
+}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 24px 48px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .ico{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#7a6bff,#5a49e0);display:grid;place-items:center}
+.brand .ico i{width:16px;height:14px;border:2.5px solid #fff;border-radius:3px;display:block}
+.brand b{font-size:1.3rem;letter-spacing:-.01em}
+.brand small{color:var(--accent2);font-weight:700;font-size:.72rem;margin-left:4px}
+.safe{color:var(--muted);font-size:.9rem}
+.hero{text-align:center;margin:44px 0 36px}
+.pill{display:inline-block;border:1px solid var(--line);background:rgba(109,93,240,.14);color:#d9d6ff;border-radius:999px;padding:7px 16px;font-size:.78rem;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+h1{font-size:clamp(2.2rem,6vw,3.8rem);letter-spacing:-.04em;line-height:1.05;margin:22px 0 14px;font-weight:800}
+.hero p{margin:0;color:var(--muted);font-size:1.05rem}
+.grid{display:grid;grid-template-columns:1.45fr 1fr;gap:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 22px;border-bottom:1px solid var(--line)}
+.phead h2{margin:0;font-size:1.05rem}
+.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.92rem}
+.status::before{content:"";width:9px;height:9px;border-radius:50%;background:#5b6190}
+.status.on::before{background:var(--green);box-shadow:0 0 0 4px rgba(46,204,143,.18)}
+.stage{margin:14px;border-radius:12px;background:#05060f;aspect-ratio:16/9;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.stage video{width:100%;height:100%;object-fit:contain;background:#05060f}
+.stage .ph{position:absolute;text-align:center;color:var(--muted);padding:24px;max-width:36ch}
+.stage .ph svg{display:block;margin:0 auto 10px;opacity:.7}
+.actions{display:flex;gap:10px;flex-wrap:wrap;padding:6px 22px 8px}
+button{font:inherit;font-weight:700;cursor:pointer;border-radius:11px;padding:12px 18px;border:1px solid var(--line);color:var(--ink);background:#1a1f3d}
+button.primary{background:linear-gradient(180deg,#7a6bff,#5f4fe6);border-color:#8a7dff}
+button.stop{background:#2a1722;border-color:#5a2a38;color:#ffb3bd}
+button:hover:not(:disabled){filter:brightness(1.12)}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+.msg{padding:10px 22px 22px;color:var(--muted);font-size:.95rem;margin:0}
+.msg.err{color:#ff9aa6}
+.side{padding:22px}
+.side h2{margin:0 0 6px;font-size:1.05rem}
+.side p{margin:0 0 16px;color:var(--muted);font-size:.95rem}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.tabs button{background:var(--panel2)}
+.tabs button[aria-selected="true"]{background:#2b2570;border-color:#7a6bff}
+.label{font-weight:700;font-size:.95rem;margin:0 0 8px}
+.row{display:flex;gap:10px}
+input{flex:1;min-width:0;font:inherit;padding:13px 14px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:600;letter-spacing:.08em}
+input::placeholder{letter-spacing:0;font-weight:400;color:#6c7199}
+.hint{color:var(--muted);font-size:.92rem;margin:12px 0 0}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent2);font-weight:600;cursor:pointer;margin-top:8px;font-size:.92rem}
+.note{margin-top:18px;border:1px solid #5a4824;background:rgba(217,164,65,.08);border-radius:12px;padding:14px 16px;font-size:.92rem;color:#e8dcc0}
+.foot{text-align:center;color:var(--muted);font-size:.88rem;margin-top:34px}
+.quality{display:flex;gap:16px;flex-wrap:wrap;padding:4px 22px 12px;color:var(--muted);font-size:.9rem}
+.quality label{display:flex;align-items:center;gap:8px}
+.quality select{font:inherit;font-weight:600;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--ink)}
+.warn{border:1px solid;border-radius:12px;padding:12px 16px;margin:22px 0 0;font-size:.95rem;font-weight:600}
+.warn.l1{border-color:#8a6d1f;background:rgba(217,164,65,.14);color:#f2dfae}
+.warn.l2{border-color:#a8531f;background:rgba(255,140,60,.14);color:#ffd2b0}
+.warn.l3{border-color:#a02a3a;background:rgba(255,90,106,.16);color:#ffc2ca}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="ico"><i></i></span><b>Compartilha</b><small>AO VIVO</small></div>
+    <div class="safe">🔒 Você controla quando compartilhar</div>
+  </header>
+
+  <div id="quotaWarn" class="warn hidden" role="alert"></div>
+
+  <section class="hero">
+    <span class="pill">Compartilhamento remoto</span>
+    <h1>Mostre sua tela à distância.</h1>
+    <p>Crie uma sessão e envie seu código para a pessoa que vai assistir.</p>
+  </section>
+
+  <div class="grid">
+    <!-- TRANSMISSÃO -->
+    <section class="panel">
+      <div class="phead">
+        <h2 id="stageTitle">Transmissão</h2>
+        <span class="status" id="status">Pronto para transmitir</span>
+      </div>
+      <div class="stage" id="stage">
+        <video id="video" autoplay playsinline muted></video>
+        <button class="primary hidden" id="playBtn" style="position:absolute;z-index:2">▶ Toque para ver a tela</button>
+        <div class="ph" id="ph">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+          <span id="phText">Sua tela vai aparecer aqui quando você iniciar.</span>
+        </div>
+      </div>
+      <div class="quality" id="quality">
+        <label>Resolução
+          <select id="selRes"><option value="480">480p</option><option value="720" selected>720p</option></select>
+        </label>
+        <label>Fluidez
+          <select id="selFps"><option value="30">30 fps</option><option value="60" selected>60 fps</option></select>
+        </label>
+        <label>Limite via servidor
+          <select id="selRelay"><option value="2000">Máxima economia (2 Mbps)</option><option value="3000">Muito econômico (3 Mbps)</option><option value="4000" selected>Economizar (4 Mbps)</option><option value="6000">Equilibrado (6 Mbps)</option><option value="10000">Qualidade (10 Mbps)</option><option value="0">Sem limite</option></select>
+        </label>
+        <label>Modo
+          <select id="selMode"><option value="auto">Automático</option><option value="game" selected>Jogo (mais fluido)</option><option value="text">Texto (mais nítido)</option></select>
+        </label>
+      </div>
+      <div class="quality hidden" id="viewopts">
+        <label>Suavidade
+          <select id="selBuf"><option value="0">Mínima (mais rápido)</option><option value="150">Equilibrada</option><option value="400" selected>Suave (mais fluida)</option></select>
+        </label>
+      </div>
+      <div class="actions">
+        <button class="primary" id="btnStart">🖥 Iniciar e compartilhar tela</button>
+        <button id="btnSwitch" disabled>🔄 Trocar tela</button>
+        <button class="stop" id="btnStop" disabled>■ Encerrar</button>
+        <button id="btnFull" disabled>⛶ Tela cheia</button>
+      </div>
+      <p class="msg" id="msg">Clique em iniciar, escolha o que mostrar e envie o código gerado.</p>
+    </section>
+
+    <!-- CONECTAR -->
+    <aside class="panel side">
+      <h2>Conectar a uma sessão</h2>
+      <p>Uma pessoa transmite; a outra entra usando o código da sessão.</p>
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tabHost" aria-selected="true">Transmitir</button>
+        <button role="tab" id="tabView" aria-selected="false">Assistir</button>
+      </div>
+
+      <div id="paneHost">
+        <div class="label">Seu código de transmissão</div>
+        <div class="row">
+          <input id="codeOut" readonly placeholder="Gerado ao iniciar" aria-label="Seu código de transmissão">
+          <button id="btnCopy" disabled>Copiar</button>
+        </div>
+        <p class="hint">Inicie o compartilhamento para criar o código. Envie-o apenas para quem deve assistir.</p>
+        <button class="linkbtn hidden" id="btnCopyLink">Copiar link direto</button>
+      </div>
+
+      <div id="paneView" class="hidden">
+        <div class="label">Código da sessão</div>
+        <div class="row">
+          <input id="codeIn" maxlength="3" placeholder="Digite o código" aria-label="Código da sessão" autocomplete="off" style="text-transform:uppercase">
+          <button class="primary" id="btnJoin">Entrar</button>
+        </div>
+        <p class="hint">Peça o código para quem está transmitindo.</p>
+      </div>
+
+      <div class="note"><b>Compatibilidade:</b> use um navegador atualizado e abra o site por HTTPS. A conexão pode falhar em algumas redes restritivas sem um servidor TURN configurado.
+        <div id="turnTest" style="margin-top:10px;font-weight:600"></div>
+        <button class="linkbtn" id="btnTurn">Testar conexão mundial</button>
+</div>
+    </aside>
+  </div>
+
+  <p class="foot">O navegador sempre pede autorização antes de capturar a tela. Encerre a sessão quando terminar.</p>
+</div>
+
+<script>
+(function(){
+  var PREFIX = "compartilha-";
+  var ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  var $ = function(id){return document.getElementById(id)};
+  var mode = "host";            // "host" | "view"
+  var peer = null, stream = null, calls = [], conns = [], active = false, gotStream = false, joinTimer = null;
+  var currentCode = "", viewConn = null, statsTimer = null, viewCall = null, lastDiag = "";
+  var idlePaused = false, lastAct = Date.now();
+  var hostStatsTimer = null, wakeLock = null, reconnects = 0, everLive = false, relayUsed = 0, totalUsed = 0;
+
+  /* ================= CONFIGURAÇÃO DO SERVIDOR TURN =================
+     Para funcionar no mundo todo (dados móveis, 4G/5G, redes de empresa) é preciso um TURN.
+     Crie uma conta grátis em um serviço de TURN (metered.ca, expressturn.com, xirsys.com...),
+     copie do painel o endereço, o usuário e a senha, e preencha abaixo.
+     Exemplo de endereços: "turn:relay1.expressturn.com:3478"  ou  "turn:global.relay.metered.ca:80"  */
+  /* TURN da Cloudflare (cota gratuita bem maior). Cole aqui o endereço do seu Worker, ex.:
+     "https://turn-telaja.SEU-USUARIO.workers.dev". Se ficar vazio ou falhar, usa o Metered abaixo como reserva. */
+  var CF_WORKER_URL = "https://patient-math-9da9.brunosamuel1524.workers.dev";
+  var CF_QUOTA_GB = 1000;
+  var MY_TURN_URLS = ["turn:standard.relay.metered.ca:80","turn:standard.relay.metered.ca:80?transport=tcp","turn:standard.relay.metered.ca:443","turns:standard.relay.metered.ca:443?transport=tcp"];
+  var MY_TURN_USER = "ada84929df5e11e4cf33466e";
+  var MY_TURN_PASS = "XVIFa5r6/j+1UbpT";
+  /* ================================================================= */
+
+  var cfIce = null, cfAt = 0;
+  var STUN = [
+    {urls:"stun:stun.l.google.com:19302"},
+    {urls:"stun:stun1.l.google.com:19302"},
+    {urls:"stun:global.stun.twilio.com:3478"}
+  ];
+  var METERED = [];
+  if(MY_TURN_URLS.length && MY_TURN_USER && MY_TURN_PASS){
+    METERED.push({urls:MY_TURN_URLS, username:MY_TURN_USER, credential:MY_TURN_PASS});
+  }else{
+    /* públicos, sem garantia */
+    METERED.push({urls:["turn:openrelay.metered.ca:80","turn:openrelay.metered.ca:443","turns:openrelay.metered.ca:443?transport=tcp"],
+      username:"openrelayproject", credential:"openrelayproject"});
+  }
+  /* Com a Cloudflare funcionando usa só ela; se o Worker falhar, o Metered entra como reserva. */
+  function iceList(){ return STUN.concat(cfIce && cfIce.length ? cfIce : METERED); }
+
+  function readCfCache(){
+    try{
+      var o=JSON.parse(localStorage.getItem("telaja_cf")||"null");
+      if(o && o.list && Date.now()-o.at < 6*3600*1000) return o;
+    }catch(e){}
+    return null;
+  }
+  async function refreshCf(force){
+    if(!CF_WORKER_URL) return;
+    if(!force){
+      if(cfIce && Date.now()-cfAt < 6*3600*1000) return;
+      var c=readCfCache();
+      if(c){ cfIce=c.list; cfAt=c.at; quota=loadQuota(); renderQuota(); return; }
+    }
+    try{
+      var ctl=new AbortController(), tm=setTimeout(function(){ ctl.abort(); },6000);
+      var r=await fetch(CF_WORKER_URL,{cache:"no-store",signal:ctl.signal});
+      clearTimeout(tm);
+      if(!r.ok) throw new Error("http "+r.status);
+      var d=await r.json(), list=[];
+      (d.iceServers||[]).forEach(function(sv){
+        var urls=[].concat(sv.urls||[]).filter(function(u){ return !/:53(\?|$)/.test(u); });   /* o Chrome bloqueia a porta 53 */
+        if(!urls.length) return;
+        var o={urls:urls};
+        if(sv.username){ o.username=sv.username; o.credential=sv.credential; }
+        list.push(o);
+      });
+      if(list.some(function(x){ return x.username; })){
+        cfIce=list; cfAt=Date.now();
+        try{ localStorage.setItem("telaja_cf",JSON.stringify({list:list,at:cfAt})); }catch(e){}
+        quota=loadQuota(); renderQuota();
+      }
+    }catch(e){}
+  }
+
+  /* Teste: só aceita candidatos "relay"; se algum aparecer, o TURN está funcionando. */
+  function autoTest(){
+    try{
+      var o=JSON.parse(sessionStorage.getItem("telaja_test")||"null");
+      if(o && o.ok && Date.now()-o.at < 30*60*1000){
+        var box=document.getElementById("turnTest");
+        box.style.color="var(--green)";
+        box.textContent="✔ Servidor de retransmissão (TURN) funcionando ("+o.p+"). Pessoas em dados móveis conseguem ver.";
+        return;
+      }
+    }catch(e){}
+    testTurn();
+  }
+  function testTurn(){
+    var box=document.getElementById("turnTest");
+    box.style.color="var(--muted)"; box.textContent="Testando a conexão mundial…";
+    var done=false, pc;
+    function finish(ok){
+      if(done) return; done=true;
+      try{pc.close()}catch(e){}
+      try{ sessionStorage.setItem("telaja_test",JSON.stringify({ok:ok,p:(cfIce?"Cloudflare":"Metered"),at:Date.now()})); }catch(e){}
+      box.style.color = ok ? "var(--green)" : "#ff9aa6";
+      box.textContent = ok
+        ? "✔ Servidor de retransmissão (TURN) funcionando ("+(cfIce?"Cloudflare":"Metered")+"). Pessoas em dados móveis conseguem ver."
+        : "✖ Nenhum servidor TURN respondeu. Pessoas em dados móveis ou outras redes provavelmente não vão ver a tela. Configure o TURN no começo do script.";
+    }
+    try{
+      pc=new RTCPeerConnection({iceServers:iceList(), iceTransportPolicy:"relay"});
+      pc.createDataChannel("t");
+      pc.onicecandidate=function(e){ if(e.candidate && /typ relay/.test(e.candidate.candidate)) finish(true); };
+      pc.createOffer().then(function(o){return pc.setLocalDescription(o)}).catch(function(){finish(false)});
+      setTimeout(function(){finish(false)},9000);
+    }catch(e){ finish(false); }
+  }
+  /* Cota mensal do plano gratuito do TURN (a mesma que aparece no painel do Metered). */
+  var TURN_QUOTA_GB = 50;
+  function quotaGB(){ return cfIce ? CF_QUOTA_GB : TURN_QUOTA_GB; }
+  function quotaKey(){ return cfIce ? "telaja_turn_cf" : "telaja_turn"; }
+  var MAX_RELAY_VIEWERS = 0;  /* pessoas assistindo ao mesmo tempo PELO servidor TURN (0 = sem limite); conexões diretas não contam */
+  var RELAY_MAX_MIN = 120;    /* minutos máximos seguidos de uma mesma pessoa pelo TURN (0 = sem limite) */
+  var IDLE_PAUSE_MIN = 0;     /* espectador pelo TURN sem mexer no mouse/teclado por X min: pausa (0 = nunca) */
+  var MAX_VIEWERS = 0;        /* máximo de pessoas assistindo ao mesmo tempo (0 = sem limite) */
+  var PREFER_H264 = true;     /* codifica pela placa de vídeo, mais leve para jogos */
+  function monthKey(){ var d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1); }
+  function loadQuota(){
+    try{
+      var o=JSON.parse(localStorage.getItem(quotaKey())||"{}");
+      return o.m===monthKey() ? {m:o.m,b:+o.b||0} : {m:monthKey(),b:0};
+    }catch(e){ return {m:monthKey(),b:0}; }
+  }
+  var quota=loadQuota();
+  function quotaFrac(){ return quota.b/(quotaGB()*1e9); }
+  function renderQuota(){
+    var pct=Math.min(100,Math.round(quotaFrac()*100));
+    var fr=quotaFrac(), w=document.getElementById("quotaWarn");
+    if(!w) return;
+    if(fr<0.7){ w.className="warn hidden"; w.textContent=""; return; }
+    var usado=fmtBytes(quota.b)+" de "+quotaGB()+" GB";
+    if(fr>=1){
+      w.className="warn l3";
+      w.textContent="⛔ A cota do TURN acabou (estimativa: "+usado+"). Novas sessões só funcionam com conexão direta, e quem estiver em rede restrita, como dados móveis, pode não conseguir ver a tela.";
+    }else if(fr>=0.9){
+      w.className="warn l2";
+      w.textContent="⚠ Cota do TURN quase no fim: "+pct+"% usada ("+usado+"). A qualidade das conexões pelo servidor está limitada a 1,5 Mbps.";
+    }else{
+      w.className="warn l1";
+      w.textContent="⚠ Atenção: "+pct+"% da cota do TURN já foi usada neste mês ("+usado+"). A qualidade das conexões pelo servidor foi reduzida para 3 Mbps para economizar.";
+    }
+  }
+  function addRelay(delta){
+    if(delta<=0) return;
+    if(quota.m!==monthKey()) quota={m:monthKey(),b:0};
+    quota.b+=delta;
+    try{ localStorage.setItem(quotaKey(),JSON.stringify(quota)); }catch(e){}
+    renderQuota();
+  }
+  /* Quando a cota estimada acaba, novas sessões deixam de usar o TURN (só conexão direta). */
+  function peerOpts(){
+    var ice=iceList();
+    if(quotaFrac()>=1){
+      ice=ice.filter(function(x){ return ![].concat(x.urls).some(function(u){ return /^turns?:/.test(u); }); });
+    }
+    return {config:{iceServers:ice},debug:0};
+  }
+  var lastTier=0;
+
+  function watchIce(call, onFail){
+    var pc = call && call.peerConnection;
+    if(!pc) return;
+    pc.addEventListener("iceconnectionstatechange", function(){
+      if(pc.iceConnectionState==="failed") onFail();
+    });
+  }
+
+  /* Faz o navegador começar a transmitir em taxa alta, em vez de subir devagar (evita imagem 320p). */
+  function sdpBoost(sdp){
+    try{
+      var lines=sdp.split("\r\n"), out=[], pts={}, hasFmtp={}, sec=false;
+      lines.forEach(function(l){
+        if(l.indexOf("m=")===0) sec=(l.indexOf("m=video")===0);
+        if(!sec) return;
+        var m=l.match(/^a=rtpmap:(\d+) (VP8|VP9|H264|AV1)\//i); if(m) pts[m[1]]=true;
+        var f=l.match(/^a=fmtp:(\d+) /); if(f) hasFmtp[f[1]]=true;
+      });
+      var extra="x-google-min-bitrate=1500;x-google-start-bitrate=4000;x-google-max-bitrate=30000";
+      sec=false;
+      lines.forEach(function(l){
+        if(l.indexOf("m=")===0) sec=(l.indexOf("m=video")===0);
+        if(sec){
+          var f=l.match(/^a=fmtp:(\d+) /);
+          if(f&&pts[f[1]]&&l.indexOf("x-google-")<0){ out.push(l+";"+extra); return; }
+          out.push(l);
+          var r=l.match(/^a=rtpmap:(\d+) /);
+          if(r&&pts[r[1]]&&!hasFmtp[r[1]]) out.push("a=fmtp:"+r[1]+" "+extra);
+          return;
+        }
+        out.push(l);
+      });
+      return out.join("\r\n");
+    }catch(e){ return sdp; }
+  }
+  /* Coloca o H.264 na frente: o navegador codifica pela placa de vídeo e não pesa no processador do jogo. */
+  function preferH264(sdp){
+    try{
+      var lines=sdp.split("\r\n"), idx=-1, sec=false, codec={}, apt={};
+      lines.forEach(function(l,i){
+        if(l.indexOf("m=")===0){ sec=(l.indexOf("m=video")===0); if(sec) idx=i; return; }
+        if(!sec) return;
+        var m=l.match(/^a=rtpmap:(\d+) ([A-Za-z0-9]+)\//); if(m) codec[m[1]]=m[2].toUpperCase();
+        var a=l.match(/^a=fmtp:(\d+) .*apt=(\d+)/); if(a) apt[a[1]]=a[2];
+      });
+      if(idx<0) return sdp;
+      var parts=lines[idx].split(" "), head=parts.slice(0,3), pts=parts.slice(3), first=[], rest=[];
+      pts.forEach(function(pt){
+        if(codec[pt]==="H264"||(apt[pt]&&codec[apt[pt]]==="H264")) first.push(pt); else rest.push(pt);
+      });
+      if(!first.length) return sdp;
+      lines[idx]=head.concat(first,rest).join(" ");
+      return lines.join("\r\n");
+    }catch(e){ return sdp; }
+  }
+  function hostSdp(sdp){
+    var o=sdpBoost(sdp);
+    if(PREFER_H264) o=preferH264(o);
+    return o;
+  }
+  /* Espectador: um pequeno atraso de segurança esconde as oscilações da rede e deixa o vídeo mais liso. */
+  function applyBuffer(){
+    var call=viewCall; if(!call||!call.peerConnection) return;
+    var ms=+$("selBuf").value;
+    call.peerConnection.getReceivers().forEach(function(r){
+      if(r.track&&r.track.kind==="video"){
+        try{ r.jitterBufferTarget=ms; }catch(e){}
+        try{ r.playoutDelayHint=ms/1000; }catch(e){}
+      }
+    });
+  }
+  function qual(){
+    var h=Math.min(720,+$("selRes").value), f=Math.min(60,+$("selFps").value), m=$("selMode").value, w=Math.round(h*16/9);
+    var kbps=Math.max(1500,Math.min(30000,Math.round(w*h*f*0.09/1000)));
+    return {h:h,w:w,f:f,mode:m,kbps:kbps};
+  }
+  function capConstraints(){
+    var q=qual();
+    return {video:{width:{ideal:q.w},height:{ideal:q.h},frameRate:{ideal:q.f,max:q.f}},audio:true};
+  }
+  function hintTrack(st){
+    try{ var md=qual().mode; st.getVideoTracks()[0].contentHint = md==="game" ? "motion" : (md==="text" ? "detail" : ""); }catch(e){}
+  }
+  function describeCapture(){
+    try{
+      var st=stream.getVideoTracks()[0].getSettings();
+      return st.width+"×"+st.height+" a "+Math.round(st.frameRate||0)+" fps";
+    }catch(e){ return ""; }
+  }
+  function tuneCall(c){
+    var pc=c&&c.peerConnection; if(!pc) return;
+    var q=qual(), kbps=q.kbps, cap=+$("selRelay").value;
+    if(c._relay){
+      if(cap>0) kbps=Math.min(kbps,cap);
+      var fr=quotaFrac();
+      if(fr>=0.9) kbps=Math.min(kbps,1500); else if(fr>=0.7) kbps=Math.min(kbps,3000);
+    }
+    pc.getSenders().forEach(function(sn){
+      if(!sn.track||sn.track.kind!=="video") return;
+      try{
+        var pr=sn.getParameters();
+        if(!pr.encodings||!pr.encodings.length) return;
+        pr.encodings[0].maxBitrate=kbps*1000;
+        pr.encodings[0].maxFramerate = (c._relay && kbps<=4000) ? Math.min(q.f,30) : q.f;
+        pr.encodings[0].active=!c._paused;
+        pr.degradationPreference = q.mode==="game" ? "maintain-framerate" : (q.mode==="text" ? "maintain-resolution" : "balanced");
+        sn.setParameters(pr).catch(function(){});
+      }catch(e){}
+    });
+  }
+  async function applyQuality(){
+    if(!active||mode!=="host"||!stream) return;
+    var q=qual(), t=stream.getVideoTracks()[0];
+    try{ await t.applyConstraints({width:{ideal:q.w},height:{ideal:q.h},frameRate:{ideal:q.f,max:q.f}}); }catch(e){}
+    hintTrack(stream);
+    calls.forEach(tuneCall);
+    setMsg("Qualidade aplicada: capturando "+describeCapture()+" (até ~"+Math.round(q.kbps/1000)+" Mbps).");
+  }
+  async function keepAwake(on){
+    try{
+      if(on){
+        if(navigator.wakeLock && !wakeLock){
+          wakeLock=await navigator.wakeLock.request("screen");
+          wakeLock.addEventListener("release",function(){ wakeLock=null; });
+        }
+      }else if(wakeLock){ await wakeLock.release(); wakeLock=null; }
+    }catch(e){}
+  }
+  document.addEventListener("visibilitychange",function(){ if(active&&document.visibilityState==="visible") keepAwake(true); });
+  function keepSignal(pr){
+    pr.on("disconnected",function(){
+      var n=0;
+      (function retry(){
+        if(!active||peer!==pr||pr.destroyed) return;
+        try{ pr.reconnect(); }catch(e){}
+        if(++n<20) setTimeout(function(){ if(pr.disconnected) retry(); },3000);
+      })();
+    });
+  }
+  function fmtBytes(b){ return b>=1e9 ? (b/1e9).toFixed(2).replace(".",",")+" GB" : Math.round(b/1e6)+" MB"; }
+  function dropRelay(c,msg){
+    c._dropped=true;
+    conns.forEach(function(cn){
+      if(cn.peer===c.peer){ try{cn.send(msg)}catch(e){} setTimeout(function(){ try{cn.close()}catch(e){} },400); }
+    });
+    try{c.close()}catch(e){}
+  }
+  function relayGuard(){
+    var now=Date.now();
+    var rel=calls.filter(function(c){ return c._relay && !c._dropped && c._relaySince; });
+    if(RELAY_MAX_MIN>0) rel.forEach(function(c){ if(now-c._relaySince>RELAY_MAX_MIN*60000) dropRelay(c,"relay_timeout"); });
+    if(MAX_RELAY_VIEWERS>0){
+      rel=calls.filter(function(c){ return c._relay && !c._dropped && c._relaySince && now-c._relaySince>8000; })
+               .sort(function(a,b){ return a._relaySince-b._relaySince; });
+      rel.slice(MAX_RELAY_VIEWERS).forEach(function(c){ dropRelay(c,"relay_full"); });
+    }
+  }
+  async function hostStats(){
+    if(!active||mode!=="host") return;
+    for(var k=0;k<calls.length;k++){
+      var c=calls[k], pc=c.peerConnection; if(!pc) continue;
+      try{
+        var rep=await pc.getStats(), bytes=0, pair=null, loc={}, rem={};
+        rep.forEach(function(r){
+          if(r.type==="outbound-rtp") bytes+=r.bytesSent||0;
+          if(r.type==="local-candidate") loc[r.id]=r;
+          if(r.type==="remote-candidate") rem[r.id]=r;
+          if(r.type==="candidate-pair"&&r.state==="succeeded"&&(r.nominated||r.selected)) pair=r;
+        });
+        var relay=false;
+        if(pair){
+          var a=loc[pair.localCandidateId], b=rem[pair.remoteCandidateId];
+          relay=!!((a&&a.candidateType==="relay")||(b&&b.candidateType==="relay"));
+        }
+        var delta=Math.max(0,bytes-(c._last||0)); c._last=bytes;
+        totalUsed+=delta; if(relay){ relayUsed+=delta; addRelay(delta); }
+        if(!!c._relay!==relay){ c._relay=relay; c._relaySince=relay?Date.now():0; tuneCall(c); }
+      }catch(e){}
+    }
+    relayGuard();
+    var fr=quotaFrac(), tier=fr>=0.9?2:(fr>=0.7?1:0);
+    if(tier!==lastTier){
+      lastTier=tier; calls.forEach(tuneCall);
+      if(tier>0) setMsg("Cota do TURN em "+Math.round(fr*100)+"% (estimativa). A qualidade das conexões pelo servidor foi reduzida para economizar.");
+    }
+    updateHostStatus();
+  }
+  function setStatus(text, on){ var s=$("status"); s.textContent=text; s.classList.toggle("on", !!on); }
+  function setMsg(text, err){ var m=$("msg"); m.textContent=text; m.classList.toggle("err", !!err); }
+  function randomCode(){
+    var a=new Uint32Array(3); crypto.getRandomValues(a);
+    return Array.prototype.map.call(a,function(n){return ALPHA[n%ALPHA.length]}).join("");
+  }
+  function baseUrl(){ return location.origin + location.pathname; }
+  function flash(btn,t){ var o=btn.textContent; btn.textContent=t; setTimeout(function(){btn.textContent=o},1500); }
+  function copy(text,btn){
+    var ok=function(){flash(btn,"Copiado!")};
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok,ok); else ok();
+  }
+  function viewerCount(){ return conns.filter(function(c){return c.open}).length; }
+  function updateHostStatus(){
+    if(!active||mode!=="host") return;
+    var n=viewerCount();
+    var extra=relayUsed>0 ? " · via TURN: "+fmtBytes(relayUsed) : "";
+    setStatus((n===0?"Transmitindo, sem espectador":"Transmitindo para "+n+(n===1?" espectador":" espectadores"))+extra, true);
+  }
+  function selectMode(m){
+    if(active) stopAll();
+    mode=m;
+    $("tabHost").setAttribute("aria-selected", m==="host");
+    $("tabView").setAttribute("aria-selected", m==="view");
+    $("paneHost").classList.toggle("hidden", m!=="host");
+    $("paneView").classList.toggle("hidden", m!=="view");
+    $("btnStart").classList.toggle("hidden", m!=="host");
+    $("btnSwitch").classList.toggle("hidden", m!=="host");
+    $("quality").classList.toggle("hidden", m!=="host");
+    $("viewopts").classList.toggle("hidden", m!=="view");
+    $("stageTitle").textContent = m==="host" ? "Transmissão" : "Visualização";
+    $("phText").textContent = m==="host" ? "Sua tela vai aparecer aqui quando você iniciar." : "A tela de quem transmite vai aparecer aqui.";
+    setStatus(m==="host" ? "Pronto para transmitir" : "Aguardando código", false);
+    setMsg(m==="host" ? "Clique em iniciar, escolha o que mostrar e envie o código gerado." : "Digite o código recebido e clique em Entrar.");
+  }
+  function resetUI(){
+    $("video").srcObject=null; $("ph").classList.remove("hidden");
+    $("btnStop").disabled=true; $("btnFull").disabled=true; $("btnSwitch").disabled=true; $("playBtn").classList.add("hidden");
+    $("btnStart").disabled=false; $("btnJoin").disabled=false;
+    $("btnCopy").disabled=true; $("codeOut").value=""; $("btnCopyLink").classList.add("hidden");
+  }
+  function stopAll(){
+    clearTimeout(joinTimer); clearInterval(statsTimer); clearInterval(hostStatsTimer); keepAwake(false);
+    calls.forEach(function(c){try{c.close()}catch(e){}});
+    conns.forEach(function(c){try{c.close()}catch(e){}});
+    calls=[]; conns=[]; gotStream=false; idlePaused=false; $("playBtn").textContent="▶ Toque para ver a tela";
+    if(stream){stream.getTracks().forEach(function(t){t.stop()}); stream=null;}
+    if(peer){try{peer.destroy()}catch(e){} peer=null;}
+    active=false; currentCode="";
+    resetUI();
+  }
+  function end(statusText,msg,err){
+    stopAll(); everLive=false; reconnects=0;
+    history.replaceState(null,"",baseUrl());
+    setStatus(statusText,false); setMsg(msg,err);
+  }
+
+  /* ---------- TRANSMITIR ---------- */
+  async function startHost(){
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){
+      return setMsg("Este navegador não permite compartilhar a tela. No celular isso geralmente não funciona; use um computador.",true);
+    }
+    try{ stream=await navigator.mediaDevices.getDisplayMedia(capConstraints()); }
+    catch(e){ return setMsg("Compartilhamento cancelado. Escolha uma tela ou janela para continuar.",true); }
+
+    hintTrack(stream);
+    active=true; relayUsed=0; totalUsed=0; keepAwake(true);
+    $("btnStart").disabled=true; $("btnStop").disabled=false;
+    setStatus("Criando sessão…",false); setMsg("Criando sessão…");
+    await refreshCf();
+    createPeer();
+    bindEnded(stream);
+  }
+  function bindEnded(st){
+    var t=st.getVideoTracks()[0]; if(!t) return;
+    t.addEventListener("ended",function(){ if(stream===st) end("Pronto para transmitir","O compartilhamento foi encerrado."); });
+  }
+  function callViewer(conn){
+    if(!stream||!peer) return;
+    calls=calls.filter(function(c){ if(c.peer===conn.peer){ try{c.close()}catch(e){} return false; } return true; });
+    var c=peer.call(conn.peer,stream,{sdpTransform:hostSdp});
+    calls.push(c);
+    var pc0=c.peerConnection;
+    if(pc0) pc0.addEventListener("iceconnectionstatechange",function(){
+      if(pc0.iceConnectionState==="connected"||pc0.iceConnectionState==="completed") tuneCall(c);
+    });
+    watchIce(c,function(){ setMsg("Não foi possível conectar com este espectador (a rede dele bloqueou a conexão). Peça para tentar de novo ou usar outra rede.",true); });
+  }
+  async function switchScreen(){
+    if(!active||mode!=="host"||!stream) return;
+    var ns;
+    try{ ns=await navigator.mediaDevices.getDisplayMedia(capConstraints()); }
+    catch(e){ return setMsg("Troca cancelada. Você continua compartilhando a tela anterior."); }
+    hintTrack(ns);
+    var nv=ns.getVideoTracks()[0], na=ns.getAudioTracks()[0]||null;
+    calls.forEach(function(c){
+      var pc=c.peerConnection; if(!pc) return;
+      pc.getTransceivers().forEach(function(tr){
+        var k=tr.receiver&&tr.receiver.track&&tr.receiver.track.kind;
+        if(k==="video") tr.sender.replaceTrack(nv).catch(function(){});
+        else if(k==="audio") tr.sender.replaceTrack(na).catch(function(){});
+      });
+    });
+    var old=stream; stream=ns;
+    $("video").srcObject=ns;
+    bindEnded(ns);
+    old.getTracks().forEach(function(t){t.stop()});
+    setMsg("Tela trocada. Quem está assistindo já vê a nova tela. Capturando "+describeCapture()+".");
+  }
+  function createPeer(){
+    var code=randomCode();
+    peer=new Peer(PREFIX+code, peerOpts());
+    keepSignal(peer);
+    peer.on("error",function(err){
+      if(err.type==="unavailable-id"){ try{peer.destroy()}catch(e){} createPeer(); return; }
+      /* Um espectador que saiu ou trocou de conexão não pode derrubar a sua transmissão. */
+      if(err.type==="peer-unavailable"){
+        setMsg("Um espectador saiu antes de a conexão terminar. Sua transmissão continua ativa.");
+        return;
+      }
+      if(["network","server-error","socket-error","socket-closed","disconnected"].indexOf(err.type)>=0 && currentCode){
+        setMsg("Instabilidade na conexão com o servidor. Reconectando…");
+        try{ if(peer&&peer.disconnected) peer.reconnect(); }catch(e){}
+        return;
+      }
+      end("Pronto para transmitir", currentCode
+        ? "A sessão foi interrompida ("+err.type+"). Clique em iniciar para criar outra."
+        : "Não foi possível criar a sessão ("+err.type+"). Verifique a internet e tente de novo.", true);
+    });
+    peer.on("open",function(){
+      currentCode=code;
+      clearInterval(hostStatsTimer); hostStatsTimer=setInterval(hostStats,3000);
+      $("codeOut").value=code; $("btnCopy").disabled=false; $("btnCopyLink").classList.remove("hidden");
+      $("video").srcObject=stream; $("video").muted=true; $("ph").classList.add("hidden");
+      $("btnFull").disabled=false; $("btnSwitch").disabled=false;
+      setMsg("Sessão criada. Envie o código para quem vai assistir. Capturando "+describeCapture()+"."+(quotaFrac()>=1?" Atenção: a cota estimada do TURN acabou, então só conexões diretas vão funcionar.":""));
+      updateHostStatus();
+    });
+    peer.on("connection",function(conn){
+      var ativos=conns.filter(function(x){ return !x._closed; }).length;
+      if(MAX_VIEWERS>0 && ativos>=MAX_VIEWERS){
+        conn.on("open",function(){ try{conn.send("full")}catch(e){} setTimeout(function(){ try{conn.close()}catch(e){} },400); });
+        return;
+      }
+      conn.on("close",function(){ conn._closed=true; });
+      conns.push(conn);
+      conn.on("open",function(){
+        updateHostStatus();
+        callViewer(conn);
+        setMsg("Alguém entrou na sessão.");
+      });
+      conn.on("data",function(m){
+        if(m==="retry") callViewer(conn);
+        if(m==="pause"||m==="resume"){
+          calls.forEach(function(c){ if(c.peer===conn.peer){ c._paused=(m==="pause"); tuneCall(c); } });
+        }
+      });
+      var left=function(){ updateHostStatus(); if(active&&viewerCount()===0) setMsg("O espectador desconectou. Seu código continua válido."); };
+      conn.on("close",left); conn.on("error",left);
+    });
+  }
+
+  /* ---------- ASSISTIR ---------- */
+  async function join(raw){
+    var code=(raw||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+    if(code.length!==3){ return setMsg("O código tem 3 letras ou números.",true); }
+    if(active) stopAll();
+    active=true; gotStream=false; keepAwake(true);
+    $("btnJoin").disabled=true; $("btnStop").disabled=false;
+    setStatus("Conectando…",false); setMsg("Conectando à sessão "+code+"…");
+
+    await refreshCf();
+    if(!active) return;
+    peer=new Peer(undefined, peerOpts());
+    keepSignal(peer);
+    joinTimer=setTimeout(function(){
+      if(!gotStream) end("Aguardando código", everLive ? "A transmissão terminou." : "Não encontramos a sessão "+code+". Confira o código; a outra pessoa precisa estar transmitindo.", !everLive);
+    },15000);
+    peer.on("error",function(err){
+      if(err.type==="peer-unavailable" && everLive){ return end("Aguardando código","A transmissão terminou."); }
+      end("Aguardando código", err.type==="peer-unavailable"
+        ? "Não encontramos a sessão "+code+". Confira o código; a outra pessoa precisa estar transmitindo."
+        : "Erro de conexão ("+err.type+"). Tente de novo.", true);
+    });
+    peer.on("open",function(){
+      var conn=peer.connect(PREFIX+code);
+      viewConn=conn;
+      conn.on("data",function(m){
+        if(m==="full") end("Aguardando código","Esta sessão está cheia. Peça para quem transmite aumentar o limite de espectadores.",true);
+        if(m==="relay_full") end("Aguardando código","Esta sessão já tem o máximo de pessoas assistindo pelo servidor. Tente de novo mais tarde ou use uma rede que permita conexão direta.",true);
+        if(m==="relay_timeout") end("Aguardando código","A sessão pelo servidor chegou ao limite de tempo, definido para economizar dados. Entre de novo para continuar.",true);
+      });
+      conns.push(conn);
+      conn.on("close",function(){
+        if(!active||viewConn!==conn||!gotStream) return;
+        if(reconnects<6){
+          reconnects++;
+          setStatus("Reconectando…",false);
+          setMsg("Conexão perdida. Tentando reconectar ("+reconnects+"/6)…");
+          setTimeout(function(){ if(mode==="view"&&active) join(code); },3000);
+        }else end("Aguardando código","A transmissão terminou.");
+      });
+    });
+    peer.on("call",function(call){
+      call.answer(undefined,{sdpTransform:sdpBoost});
+      viewCall=call;
+      watchIce(call,function(){
+        if(viewCall!==call) return;
+        end("Aguardando código","A conexão com a outra pessoa foi bloqueada pela rede. Tente em outra rede (por exemplo, Wi-Fi em vez de 4G) ou peça para a outra pessoa tentar de novo.",true);
+      });
+      call.on("stream",function(remote){
+        var v=$("video");
+        if(v.srcObject===remote) return;
+        gotStream=true; everLive=true; clearTimeout(joinTimer);
+        v.srcObject=remote; v.muted=false;
+        tryPlay();
+        $("ph").classList.add("hidden"); $("btnFull").disabled=false;
+        setStatus("Assistindo ao vivo",true); setMsg("Você está assistindo à tela de quem transmite.");
+        watchFrames();
+        startStats(call);
+        applyBuffer(); setTimeout(applyBuffer,1000); setTimeout(applyBuffer,4000);
+      });
+      call.on("close",function(){ if(viewCall===call) end("Aguardando código","A transmissão terminou."); });
+    });
+  }
+
+  function startStats(call){
+    clearInterval(statsTimer);
+    var tick=async function(){
+      var pc=call.peerConnection;
+      if(!active||mode!=="view"||!pc) return;
+      try{
+        var rep=await pc.getStats(), info=null, pair=null, loc={}, rem={};
+        rep.forEach(function(r){
+          if(r.type==="inbound-rtp"&&r.kind==="video") info=r;
+          if(r.type==="local-candidate") loc[r.id]=r;
+          if(r.type==="remote-candidate") rem[r.id]=r;
+          if(r.type==="candidate-pair"&&r.state==="succeeded"&&(r.nominated||r.selected)) pair=r;
+        });
+        var kind="";
+        if(pair){
+          var a=loc[pair.localCandidateId], b=rem[pair.remoteCandidateId];
+          var viaRelay=(a&&a.candidateType==="relay")||(b&&b.candidateType==="relay");
+          kind=viaRelay?"via servidor TURN":"conexão direta";
+        }
+        lastDiag=pc.iceConnectionState+(kind?", "+kind:"");
+        if(info&&info.frameWidth) setStatus("Ao vivo · "+info.frameWidth+"×"+info.frameHeight+" · "+Math.round(info.framesPerSecond||0)+" fps"+(kind?" · "+kind:""),true);
+      }catch(e){}
+    };
+    tick();
+    statsTimer=setInterval(tick,2000);
+  }
+  function tryPlay(){
+    var v=$("video");
+    v.play().then(function(){ $("playBtn").classList.add("hidden"); },function(){
+      v.muted=true;
+      v.play().then(function(){ $("playBtn").classList.add("hidden"); },function(){ $("playBtn").classList.remove("hidden"); });
+    });
+  }
+  function watchFrames(){
+    var v=$("video"), tries=0, retried=false;
+    var t=setInterval(function(){
+      if(!active||mode!=="view"){ clearInterval(t); return; }
+      if(v.videoWidth>0){ clearInterval(t); reconnects=0; setMsg("Você está assistindo à tela de quem transmite."); return; }
+      tries++;
+      if(tries<=40) setMsg("Aguardando a imagem… ("+(lastDiag||"conectando")+"). Isso pode levar alguns segundos.");
+      if(tries===15&&!retried){ retried=true; try{ viewConn&&viewConn.send("retry"); }catch(e){} }
+      if(tries===40){
+        clearInterval(t);
+        setMsg("A imagem não chegou ("+(lastDiag||"sem conexão")+"). Clique em Encerrar e entre de novo, ou peça para quem transmite clicar em Trocar tela.",true);
+      }
+    },1000);
+  }
+  $("playBtn").onclick=function(){
+    var v=$("video"); v.muted=false; v.play().catch(function(){}); this.classList.add("hidden");
+    if(idlePaused){
+      idlePaused=false; lastAct=Date.now(); this.textContent="▶ Toque para ver a tela";
+      try{ viewConn&&viewConn.send("resume"); }catch(e){}
+      setMsg("Você está assistindo à tela de quem transmite.");
+    }
+  };
+  $("btnSwitch").onclick=switchScreen;
+  $("selBuf").onchange=applyBuffer;
+  var hideTimer=null;
+  document.addEventListener("visibilitychange",function(){
+    if(mode!=="view"||!active||!viewConn) return;
+    clearTimeout(hideTimer);
+    if(document.visibilityState==="hidden"){ hideTimer=setTimeout(function(){ try{viewConn.send("pause")}catch(e){} },15000); }
+    else if(!idlePaused){ try{viewConn.send("resume")}catch(e){} }
+  });
+  ["mousemove","keydown","touchstart","click","wheel"].forEach(function(ev){
+    document.addEventListener(ev,function(){ lastAct=Date.now(); },{passive:true});
+  });
+  setInterval(function(){
+    if(mode!=="view"||!active||!gotStream||idlePaused||!IDLE_PAUSE_MIN) return;
+    if(/TURN/.test(lastDiag) && Date.now()-lastAct>IDLE_PAUSE_MIN*60000){
+      idlePaused=true;
+      try{ viewConn&&viewConn.send("pause"); }catch(e){}
+      var b=$("playBtn"); b.textContent="▶ Continuar assistindo"; b.classList.remove("hidden");
+      setMsg("Pausado para economizar dados. Clique para continuar assistindo.");
+    }
+  },30000);
+  renderQuota();
+  $("selRelay").onchange=function(){ calls.forEach(tuneCall); };
+  $("selRes").onchange=applyQuality; $("selFps").onchange=applyQuality; $("selMode").onchange=applyQuality;
+  $("btnTurn").onclick=function(){ refreshCf(true).then(testTurn); };
+  refreshCf().then(autoTest);
+
+  /* ---------- EVENTOS ---------- */
+  $("tabHost").onclick=function(){ if(mode!=="host") selectMode("host"); };
+  $("tabView").onclick=function(){ if(mode!=="view") selectMode("view"); };
+  $("btnStart").onclick=startHost;
+  $("btnStop").onclick=function(){
+    if(mode==="host") end("Pronto para transmitir","Transmissão encerrada.");
+    else end("Aguardando código","Você saiu da sessão.");
+  };
+  $("btnCopy").onclick=function(){ copy($("codeOut").value,this); };
+  $("btnCopyLink").onclick=function(){ copy(baseUrl()+"#"+currentCode,this); };
+  $("btnJoin").onclick=function(){ reconnects=0; join($("codeIn").value); };
+  $("codeIn").addEventListener("keydown",function(e){ if(e.key==="Enter") join(this.value); });
+  $("btnFull").onclick=function(){
+    var el=$("stage");
+    if(document.fullscreenElement) document.exitFullscreen(); else if(el.requestFullscreen) el.requestFullscreen();
+  };
+  window.addEventListener("beforeunload",stopAll);
+
+  if(location.hash.length>1){
+    selectMode("view");
+    var c=location.hash.slice(1); $("codeIn").value=c.toUpperCase();
+    join(c);
+  }
+})();
+</script>
+</body>
+</html>
