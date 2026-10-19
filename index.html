@@ -214,19 +214,11 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   var idlePaused = false, lastAct = Date.now(), userMuted = false, userPaused = false, joining = false, starting = false;
   var hostStatsTimer = null, wakeLock = null, reconnects = 0, everLive = false, relayUsed = 0, totalUsed = 0;
 
-  /* ================= CONFIGURAÇÃO DO SERVIDOR TURN =================
-     Para funcionar no mundo todo (dados móveis, 4G/5G, redes de empresa) é preciso um TURN.
-     Crie uma conta grátis em um serviço de TURN (metered.ca, expressturn.com, xirsys.com...),
-     copie do painel o endereço, o usuário e a senha, e preencha abaixo.
-     Exemplo de endereços: "turn:relay1.expressturn.com:3478"  ou  "turn:global.relay.metered.ca:80"  */
-  /* TURN da Cloudflare (cota gratuita bem maior). Cole aqui o endereço do seu Worker, ex.:
-     "https://turn-telaja.SEU-USUARIO.workers.dev". Se ficar vazio ou falhar, usa o Metered abaixo como reserva. */
   var CF_WORKER_URL = "https://patient-math-9da9.brunosamuel1524.workers.dev";
   var CF_QUOTA_GB = 1000;
   var MY_TURN_URLS = ["turn:standard.relay.metered.ca:80","turn:standard.relay.metered.ca:80?transport=tcp","turn:standard.relay.metered.ca:443","turns:standard.relay.metered.ca:443?transport=tcp"];
   var MY_TURN_USER = "ada84929df5e11e4cf33466e";
   var MY_TURN_PASS = "XVIFa5r6/j+1UbpT";
-  /* ================================================================= */
 
   var cfIce = null, cfAt = 0;
   var STUN = [
@@ -238,11 +230,9 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   if(MY_TURN_URLS.length && MY_TURN_USER && MY_TURN_PASS){
     METERED.push({urls:MY_TURN_URLS, username:MY_TURN_USER, credential:MY_TURN_PASS});
   }else{
-    /* públicos, sem garantia */
     METERED.push({urls:["turn:openrelay.metered.ca:80","turn:openrelay.metered.ca:443","turns:openrelay.metered.ca:443?transport=tcp"],
       username:"openrelayproject", credential:"openrelayproject"});
   }
-  /* Com a Cloudflare funcionando usa só ela; se o Worker falhar, o Metered entra como reserva. */
   function iceList(){ return STUN.concat(cfIce && cfIce.length ? cfIce : METERED); }
 
   function readCfCache(){
@@ -266,7 +256,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       if(!r.ok) throw new Error("http "+r.status);
       var d=await r.json(), list=[];
       (d.iceServers||[]).forEach(function(sv){
-        var urls=[].concat(sv.urls||[]).filter(function(u){ return !/:53(\?|$)/.test(u); });   /* o Chrome bloqueia a porta 53 */
+        var urls=[].concat(sv.urls||[]).filter(function(u){ return !/:53(\?|$)/.test(u); });
         if(!urls.length) return;
         var o={urls:urls};
         if(sv.username){ o.username=sv.username; o.credential=sv.credential; }
@@ -280,7 +270,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     }catch(e){}
   }
 
-  /* Teste: só aceita candidatos "relay"; se algum aparecer, o TURN está funcionando. */
   function autoTest(){
     try{
       var o=JSON.parse(sessionStorage.getItem("telaja_test")||"null");
@@ -314,15 +303,15 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       setTimeout(function(){finish(false)},9000);
     }catch(e){ finish(false); }
   }
-  /* Cota mensal do plano gratuito do TURN (a mesma que aparece no painel do Metered). */
+
   var TURN_QUOTA_GB = 50;
   function quotaGB(){ return cfIce ? CF_QUOTA_GB : TURN_QUOTA_GB; }
   function quotaKey(){ return cfIce ? "telaja_turn_cf" : "telaja_turn"; }
-  var MAX_RELAY_VIEWERS = 0;  /* pessoas assistindo ao mesmo tempo PELO servidor TURN (0 = sem limite); conexões diretas não contam */
-  var RELAY_MAX_MIN = 120;    /* minutos máximos seguidos de uma mesma pessoa pelo TURN (0 = sem limite) */
-  var IDLE_PAUSE_MIN = 0;     /* espectador pelo TURN sem mexer no mouse/teclado por X min: pausa (0 = nunca) */
-  var MAX_VIEWERS = 0;        /* máximo de pessoas assistindo ao mesmo tempo (0 = sem limite) */
-  var PREFER_H264 = true;     /* codifica pela placa de vídeo, mais leve para jogos */
+  var MAX_RELAY_VIEWERS = 0;
+  var RELAY_MAX_MIN = 120;
+  var IDLE_PAUSE_MIN = 0;
+  var MAX_VIEWERS = 0;
+  var PREFER_H264 = true;
   function monthKey(){ var d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1); }
   function loadQuota(){
     try{
@@ -356,7 +345,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     try{ localStorage.setItem(quotaKey(),JSON.stringify(quota)); }catch(e){}
     renderQuota();
   }
-  /* Quando a cota estimada acaba, novas sessões deixam de usar o TURN (só conexão direta). */
   function peerOpts(){
     var ice=iceList();
     if(quotaFrac()>=1){
@@ -372,7 +360,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     });
   }
 
-  /* Faz o navegador começar a transmitir em taxa alta, em vez de subir devagar (evita imagem 320p). */
   function sdpBoost(sdp){
     try{
       var lines=sdp.split("\r\n"), out=[], pts={}, hasFmtp={}, sec=false;
@@ -399,7 +386,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       return out.join("\r\n");
     }catch(e){ return sdp; }
   }
-  /* Coloca o H.264 na frente: o navegador codifica pela placa de vídeo e não pesa no processador do jogo. */
   function preferH264(sdp){
     try{
       var lines=sdp.split("\r\n"), idx=-1, sec=false, codec={}, apt={};
@@ -533,7 +519,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     updateHostStatus(); renderMembers();
   }
 
-  /* ---------- mensagens, status e textos da tela ---------- */
   var toastTimer=null;
   function setMsg(text, err){
     var t=$("toast");
@@ -559,7 +544,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   function sendAll(msg){ Object.keys(members).forEach(function(k){ sendTo(k,msg); }); }
   function nMembers(){ return Object.keys(members).length; }
 
-  /* ---------- quadros de vídeo (um por pessoa que transmite) ---------- */
   var localTileHidden=false;
   function layout(){
     var all=Object.keys(tiles), visible=all.filter(function(k){return !(k==="me"&&localTileHidden);});
@@ -635,13 +619,37 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
   function syncButtons(){
     var sharing=!!stream;
-    $("btnStart").disabled=$("btnStart2").disabled=(sharing||starting);
-    $("btnSwitch").disabled=!sharing;
-    $("btnStop").disabled=!active;
-    $("btnCopy").disabled=$("btnCopyCode").disabled=!roomCode;
-    $("codeOut").value=roomCode;
-    $("btnCopyLink").classList.toggle("hidden",!roomCode);
-    $("btnJoin").disabled=joining;
+
+    var btnStart = $("btnStart");
+    if (sharing) {
+      btnStart.textContent = "Encerrar transmissão";
+      btnStart.style.background = "#2a1722";
+      btnStart.style.color = "#ffb3bd";
+      btnStart.disabled = false;
+    } else {
+      btnStart.textContent = "+ Compartilhar tela";
+      btnStart.style.background = "var(--accent)";
+      btnStart.style.color = "#fff";
+      btnStart.disabled = starting;
+    }
+
+    var btnStart2 = $("btnStart2");
+    if (sharing) {
+      btnStart2.textContent = "Encerrar transmissão";
+      btnStart2.className = "pillbtn danger";
+      btnStart2.disabled = false;
+    } else {
+      btnStart2.textContent = "Transmitir";
+      btnStart2.className = "pillbtn primary";
+      btnStart2.disabled = starting;
+    }
+
+    $("btnSwitch").disabled = !sharing;
+    $("btnStop").disabled = !active;
+    $("btnCopy").disabled = $("btnCopyCode").disabled = !roomCode;
+    $("codeOut").value = roomCode;
+    $("btnCopyLink").classList.toggle("hidden", !roomCode);
+    $("btnJoin").disabled = joining;
   }
   function renderAll(){ renderHeader(); renderMembers(); syncButtons(); }
   function updateHostStatus(){
@@ -670,7 +678,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     if(msg) setMsg(msg,err);
   }
 
-  /* ---------- TRANSMITIR (cria a sala na hora, ou transmite dentro da sala em que você já está) ---------- */
   async function startShare(){
     if(stream||starting) return;
     if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){
@@ -747,7 +754,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     setMsg("Tela trocada. Quem está na sala já vê a nova tela. Capturando "+describeCapture()+".");
   }
 
-  /* ---------- SALA: quem cria (primeira pessoa que compartilha) ---------- */
   function createRoom(){
     var code=randomCode();
     peer=new Peer(PREFIX+code, peerOpts());
@@ -755,7 +761,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     isCreator=true;
     peer.on("error",function(err){
       if(err.type==="unavailable-id"){ try{peer.destroy()}catch(e){} createRoom(); return; }
-      /* Alguém que saiu ou trocou de conexão não pode derrubar a sua sala. */
       if(err.type==="peer-unavailable"){ setMsg("Alguém saiu antes de a conexão terminar. Sua sala continua ativa."); return; }
       if(["network","server-error","socket-error","socket-closed","disconnected"].indexOf(err.type)>=0 && roomCode){
         setMsg("Instabilidade na conexão com o servidor. Reconectando…");
@@ -776,7 +781,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     });
   }
 
-  /* ---------- SALA: quem entra com o código ---------- */
   async function join(raw,opts){
     opts=opts||{};
     var code=(raw||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
@@ -827,7 +831,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     });
   }
 
-  /* ---------- conexões entre as pessoas da sala ---------- */
   function wirePeer(p){
     p.on("connection",function(conn){
       if(isCreator && MAX_VIEWERS>0 && conns.filter(function(x){ return !x._closed; }).length>=MAX_VIEWERS){
@@ -948,9 +951,8 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     renderAll();
   }
 
-  /* ---------- espectador: estatísticas, reprodução e suavidade ---------- */
   function applyBuffer(){
-    /* Delay fixo em 0 ms: não há opção de configuração. */
+    /* Delay sempre mantido estritamente em 0 ms */
     var ms=0;
     Object.keys(incoming).forEach(function(id){
       var call=incoming[id];
@@ -1015,8 +1017,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       }
     },1000);
   }
-  // Controles de pausar/volume afetam somente transmissões recebidas de outras pessoas.
-  // Nunca inclua o vídeo local, identificado pela chave "me" ou pelo stream local.
   function remoteVideos(){
     return Object.keys(tiles).filter(function(k){
       return k!=="me" && tiles[k] && tiles[k].video && tiles[k].video.srcObject!==stream;
@@ -1074,9 +1074,15 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   $("btnTurn").onclick=function(){ refreshCf(true).then(testTurn); };
   refreshCf().then(autoTest);
 
-  /* ---------- EVENTOS ---------- */
-  function startClick(){ startShare(); }
-  $("btnStart").onclick=startClick; $("btnStart2").onclick=startClick;
+  function startClick(){
+    if (stream) {
+      end("", isCreator ? "Sala encerrada." : "Você saiu da sala.");
+    } else {
+      startShare();
+    }
+  }
+  $("btnStart").onclick=startClick;
+  $("btnStart2").onclick=startClick;
   $("btnStop").onclick=function(){ end("", isCreator ? "Sala encerrada." : "Você saiu da sala."); };
   function copyCode(){ copy(roomCode,this); }
   $("btnCopy").onclick=copyCode; $("btnCopyCode").onclick=copyCode;
