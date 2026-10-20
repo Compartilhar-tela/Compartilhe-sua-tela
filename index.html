@@ -14,7 +14,7 @@
 <meta property="og:description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
 <meta property="og:url" content="https://compartilhar-tela.github.io/Compartilhar.tela/">
 <meta property="og:image" id="ogImage" content="https://patient-math-9da9.brunosamuel1524.workers.dev/preview.png">
-<meta property="og:image:type" content="image/png">
+<meta property="og:image:type" content="image/svg+xml">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Compartilhe sua tela com código ao vivo">
@@ -1085,7 +1085,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
 
   function applyBuffer(){
-    var ms=0; // Delay rigorosamente em 0
+    var ms=0; // Delay rigorosamente mantido em 0
     Object.keys(incoming).forEach(function(id){
       var call=incoming[id];
       if(!call||!call.peerConnection) return;
@@ -1231,7 +1231,13 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   $("btnStop").onclick=function(){ end("", isCreator ? "Sala encerrada." : "Você saiu da sala."); };
   function copyCode(){ copy(roomCode,this); }
   $("btnCopy").onclick=copyCode; $("btnCopyCode").onclick=copyCode;
-  $("btnCopyLink").onclick=function(){ copy(baseUrl()+"#"+roomCode,this); };
+  
+  // OPÇÃO 1: Botão de copiar link direto gera o link com ?code=XYZ para o preview no Discord
+  $("btnCopyLink").onclick=function(){
+    var directLink = CF_WORKER_URL + "/?code=" + roomCode;
+    copy(directLink, this);
+  };
+
   function tryJoin(raw){
     var c=(raw||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
     if(c.length!==3) return setMsg("O código tem 3 letras ou números.",true);
