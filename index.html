@@ -708,7 +708,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     var t=st.getVideoTracks()[0]; if(!t) return;
     t.addEventListener("ended",function(){
       if(stream!==st) return;
-      if(isCreator && nMembers()===0 && Object.keys(incoming).length===0) end("","O compartilhamento foi encerrado.");
+      if(nMembers()===0 && Object.keys(incoming).length===0) end("","O compartilhamento foi encerrado.");
       else stopShare("O compartilhamento foi encerrado. Você continua na sala.");
     });
   }
@@ -901,21 +901,17 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     delete members[id];
     calls=calls.filter(function(c){ if(c.peer===id){ try{c.close()}catch(e){} return false; } return true; });
     dropIncoming(id,true);
-    if(!isCreator && id===creatorId){ creatorLost(conn); return; }
+
     delete names[id];
     if(active) setMsg(nm+" saiu da sala.");
     renderAll(); updateHostStatus();
+
+    /* A sala só é encerrada quando a contagem de usuários ativos for zero */
+    if(nMembers() === 0 && !stream && Object.keys(incoming).length === 0){
+      end("", "Todos os participantes saíram. A sala foi encerrada.");
+    }
   }
-  function creatorLost(conn){
-    if(viewConn!==conn||!creatorOpen) return;
-    var code=roomCode;
-    if(reconnects<6){
-      reconnects++;
-      setStatus("Reconectando…",false);
-      setMsg("Conexão com a sala perdida. Tentando reconectar ("+reconnects+"/6)…");
-      setTimeout(function(){ if(active&&!isCreator) join(code,{keepStream:true}); },3000);
-    }else end("","A transmissão terminou.");
-  }
+
   function dropIncoming(id,silent){
     var call=incoming[id]; delete incoming[id];
     if(call){ try{call.close()}catch(e){} }
