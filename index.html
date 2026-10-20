@@ -13,15 +13,15 @@
 <meta property="og:title" content="Compartilhe sua tela">
 <meta property="og:description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
 <meta property="og:url" content="https://compartilhar-tela.github.io/Compartilhar.tela/">
-<meta property="og:image" content="https://compartilhar-tela.github.io/Compartilhar.tela/preview.png?v=2">
+<meta property="og:image" id="ogImage" content="https://patient-math-9da9.brunosamuel1524.workers.dev/preview.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Compartilhe sua tela: logo roxo com um monitor">
+<meta property="og:image:alt" content="Compartilhe sua tela com código ao vivo">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Compartilhe sua tela">
 <meta name="twitter:description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
-<meta name="twitter:image" content="https://compartilhar-tela.github.io/Compartilhar.tela/preview.png?v=2">
+<meta name="twitter:image" id="twitterImage" content="https://patient-math-9da9.brunosamuel1524.workers.dev/preview.png">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,7 +37,6 @@ button:hover:not(:disabled){filter:brightness(1.12)}
 :focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
 .chip select:focus-visible{outline:none;box-shadow:none}
 .hidden{display:none!important}
-/* barra de cima */
 .top{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:12px 24px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:20px}
 .brand .ico{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7a6bff,#5a49e0);display:grid;place-items:center}
@@ -48,7 +47,6 @@ button:hover:not(:disabled){filter:brightness(1.12)}
 .search input::placeholder{color:#6c7199}
 .search button{padding:0 22px;border-radius:0 999px 999px 0;border:1px solid var(--line);border-left:0;background:#1a1f3d;font-weight:600}
 .cta{padding:11px 20px;border-radius:999px;border:0;background:var(--accent);color:#fff;font-weight:700}
-/* conteúdo */
 .wrap{max-width:1360px;margin:0 auto;padding:24px;width:100%}
 .main{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
 .col-main{flex:1 1 640px;min-width:0}
@@ -105,7 +103,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
 .chip select:hover{border-color:rgba(138,125,255,.85)}
 .chip select:focus,.chip select:focus-visible{border:4px solid #8a7dff;outline:none;box-shadow:0 0 0 2px rgba(138,125,255,.18)}
 .chip select option{background:#20264a;color:var(--ink);padding:14px 20px;font-weight:600}
-/* coluna lateral */
 .card{padding:18px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
 .ctitle{font-weight:700;margin-bottom:12px}
 .lbl{font-size:13px;color:var(--muted);margin-bottom:6px}
@@ -484,7 +481,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
   document.addEventListener("visibilitychange",function(){ if(active&&document.visibilityState==="visible") keepAwake(true); });
   
-  // Reconexão Automática Silenciosa
   function keepSignal(pr){
     pr.on("disconnected", function(){
       if (!active || peer !== pr || pr.destroyed) return;
@@ -626,7 +622,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     v.playsInline = true;
     if (key === "me") v.muted = true;
     
-    // Duplo clique para Ecrã Inteiro Individual
     v.ondblclick = function(e) {
       e.stopPropagation();
       if (document.fullscreenElement) {
@@ -650,7 +645,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     tag.appendChild(netDot);
     tag.appendChild(tagText);
 
-    // Controlo de Volume Individual
     if (key !== "me") {
       var vol = document.createElement("input");
       vol.type = "range";
@@ -886,6 +880,15 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     setMsg("Tela trocada. Quem está na sala já vê a nova tela. Capturando "+describeCapture()+".");
   }
 
+  function updateDynamicMeta(code) {
+    if (!code) return;
+    var previewUrl = CF_WORKER_URL + "/preview.png?code=" + code;
+    var og = $("ogImage");
+    var tw = $("twitterImage");
+    if(og) og.setAttribute("content", previewUrl);
+    if(tw) tw.setAttribute("content", previewUrl);
+  }
+
   function createRoom(){
     var code=randomCode();
     peer=new Peer(PREFIX+code, peerOpts());
@@ -906,6 +909,8 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     wirePeer(peer);
     peer.on("open",function(id){
       myId=id; creatorId=id; roomCode=code; myName="Pessoa 1"; nameSeq=1; names[id]=myName;
+      history.replaceState(null, "", baseUrl() + "#" + code);
+      updateDynamicMeta(code);
       clearInterval(hostStatsTimer); hostStatsTimer=setInterval(hostStats,3000);
       var t=getTile("me","Você"); t.video.srcObject=stream; t.video.muted=true;
       setMsg("Sala criada. Envie o código para quem vai entrar. Capturando "+describeCapture()+"."+(quotaFrac()>=1?" Atenção: a cota estimada do TURN acabou, então só conexões diretas vão funcionar.":""));
@@ -923,6 +928,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     stream=keep;
     active=true; joining=true; gotStream=false; creatorOpen=false; isCreator=false; roomCode=code; creatorId=PREFIX+code;
     keepAwake(true);
+    updateDynamicMeta(code);
     if(stream){ var me=getTile("me","Você"); me.video.srcObject=stream; me.video.muted=true; }
     setStatus("Conectando…",false); setMsg("Conectando à sala "+code+"…");
     renderAll();
@@ -1185,7 +1191,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     document.addEventListener(ev,function(){ lastAct=Date.now(); },{passive:true});
   });
 
-  // Atalhos de Teclado
   document.addEventListener("keydown", function(e) {
     if (["INPUT", "TEXTAREA", "SELECT"].indexOf(document.activeElement.tagName) !== -1) return;
     var k = e.key.toLowerCase();
