@@ -179,6 +179,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         <label class="chip"><span>Resolução</span><select id="selRes"><option value="480">480p</option><option value="720" selected>720p</option></select></label>
         <label class="chip"><select id="selFps" aria-label="Fluidez"><option value="30">30 fps</option><option value="60" selected>60 fps</option></select></label>
         <label class="chip"><select id="selMode" aria-label="Modo"><option value="auto">Modo Automático</option><option value="game" selected>Modo Jogo</option><option value="text">Modo Texto</option></select></label>
+        <label class="chip"><span>Encoder (Hardware)</span><select id="selHardware"><option value="auto" selected>Automático</option><option value="gpu">Placa de Vídeo (GPU / NVENC)</option><option value="cpu">Processador (CPU)</option></select></label>
         <label class="chip"><span>Limite via servidor</span><select id="selRelay"><option value="2000">2 Mbps</option><option value="3000">3 Mbps</option><option value="4000" selected>4 Mbps</option><option value="6000">6 Mbps</option><option value="10000">10 Mbps</option><option value="0">Sem limite</option></select></label>
       </div>
     </section>
@@ -379,7 +380,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         var m=l.match(/^a=rtpmap:(\d+) (VP8|VP9|H264|AV1)\//i); if(m) pts[m[1]]=true;
         var f=l.match(/^a=fmtp:(\d+) /); if(f) hasFmtp[f[1]]=true;
       });
-      var extra="x-google-min-bitrate=1500;x-google-start-bitrate=4000;x-google-max-bitrate=30000";
+      var extra="x-google-min-bitrate=2500;x-google-start-bitrate=6000;x-google-max-bitrate=40000";
       sec=false;
       lines.forEach(function(l){
         if(l.indexOf("m=")===0) sec=(l.indexOf("m=video")===0);
@@ -408,7 +409,9 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       if(idx<0) return sdp;
       var parts=lines[idx].split(" "), head=parts.slice(0,3), pts=parts.slice(3), first=[], rest=[];
       pts.forEach(function(pt){
-        if(codec[pt]==="H264"||(apt[pt]&&codec[apt[pt]]==="H264")) first.push(pt); else rest.push(pt);
+        var hw=$("selHardware") ? $("selHardware").value : "auto";
+        var isTarget = (hw==="gpu") ? (codec[pt]==="H264") : (codec[pt]==="VP8" || codec[pt]==="VP9");
+        if(isTarget || codec[pt]==="H264"||(apt[pt]&&codec[apt[pt]]==="H264")) first.push(pt); else rest.push(pt);
       });
       if(!first.length) return sdp;
       lines[idx]=head.concat(first,rest).join(" ");
@@ -422,7 +425,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
   function qual(){
     var h=Math.min(720,+$("selRes").value), f=Math.min(60,+$("selFps").value), m=$("selMode").value, w=Math.round(h*16/9);
-    var kbps=Math.max(1500,Math.min(30000,Math.round(w*h*f*0.09/1000)));
+    var kbps=Math.max(2500,Math.min(40000,Math.round(w*h*f*0.12/1000)));
     return {h:h,w:w,f:f,mode:m,kbps:kbps};
   }
   function capConstraints(){
@@ -433,7 +436,10 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     };
   }
   function hintTrack(st){
-    try{ var md=qual().mode; st.getVideoTracks()[0].contentHint = md==="game" ? "motion" : (md==="text" ? "detail" : ""); }catch(e){}
+    try{
+      var md=qual().mode, hw=$("selHardware").value;
+      st.getVideoTracks()[0].contentHint = (hw==="gpu" || md==="game") ? "motion" : (md==="text" ? "detail" : "");
+    }catch(e){}
   }
   function describeCapture(){
     try{
@@ -443,7 +449,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
   function tuneCall(c){
     var pc=c&&c.peerConnection; if(!pc) return;
-    var q=qual(), kbps=30000;
+    var q=qual(), kbps=q.kbps;
     c._kbps=kbps;
     pc.getSenders().forEach(function(sn){
       if(!sn.track||sn.track.kind!=="video") return;
@@ -1073,7 +1079,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
 
   function applyBuffer(){
-    var ms=0;
+    var ms=0; // Delay rigorosamente em 0
     Object.keys(incoming).forEach(function(id){
       var call=incoming[id];
       if(!call||!call.peerConnection) return;
@@ -1204,7 +1210,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
 
   renderQuota();
   $("selRelay").onchange=function(){ calls.forEach(tuneCall); };
-  $("selRes").onchange=applyQuality; $("selFps").onchange=applyQuality; $("selMode").onchange=applyQuality;
+  $("selRes").onchange=applyQuality; $("selFps").onchange=applyQuality; $("selMode").onchange=applyQuality; $("selHardware").onchange=applyQuality;
   $("btnTurn").onclick=function(){ refreshCf(true).then(testTurn); };
   refreshCf().then(autoTest);
 
