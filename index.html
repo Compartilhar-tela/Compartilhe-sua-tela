@@ -77,7 +77,6 @@ button:hover:not(:disabled){filter:brightness(1.12)}
 .tiles.n1 .tag{display:none}
 .tile-hide{position:absolute;right:8px;top:8px;z-index:15;width:28px;height:28px;padding:0;border:1px solid rgba(255,255,255,.4);border-radius:50%;background:rgba(9,11,24,.85);color:#fff;font-size:18px;font-weight:bold;line-height:1;display:grid;place-items:center;cursor:pointer;transition:background .2s,transform .1s}
 .tile-hide:hover{background:var(--red,#ff5a6a);border-color:transparent;transform:scale(1.08)}
-.tiles.n1 .tile-hide{display:none}
 .ph{position:absolute;text-align:center;color:var(--muted);padding:24px;max-width:44ch;line-height:1.5}
 .ph svg{display:block;margin:0 auto 10px;opacity:.7}
 .livebadge{position:absolute;left:3%;top:4%;padding:5px 12px;border-radius:6px;background:#e5383b;color:#fff;font-weight:800;font-size:13px;z-index:2}
@@ -170,6 +169,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
           <button class="pillbtn primary" id="btnStart2">Transmitir</button>
           <button class="pillbtn" id="btnCopyCode" disabled>Copiar código</button>
           <button class="pillbtn" id="btnSwitch" disabled>Trocar tela</button>
+          <button class="pillbtn" id="btnHideMe" disabled title="Oculta só a sua pré-visualização. Quem assiste continua vendo (atalho: H)">Ocultar minha tela</button>
           <button class="pillbtn danger" id="btnStop" disabled>Encerrar</button>
         </div>
       </div>
@@ -568,6 +568,24 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   function nMembers(){ return Object.keys(members).length; }
 
   var localTileHidden = false;
+  var PH_DEFAULT = $("phText").textContent;
+
+  // Oculta/mostra só a MINHA pré-visualização. O stream continua sendo enviado normalmente para quem assiste.
+  function setLocalHidden(h){
+    if(h && !stream) return;
+    localTileHidden = !!h;
+    var t = tiles["me"];
+    if(t){
+      if(localTileHidden){ try{ t.video.pause(); }catch(e){} }
+      else if(!t.el.classList.contains("paused")){ t.video.play().catch(function(){}); }
+    }
+    layout();
+  }
+  function updateHideBtn(){
+    var b = $("btnHideMe"); if(!b) return;
+    b.disabled = !stream;
+    b.textContent = localTileHidden ? "Mostrar minha tela" : "Ocultar minha tela";
+  }
 
   function layout() {
     var all = Object.keys(tiles);
@@ -575,9 +593,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     var remoteKeys = visible.filter(function(k) { return k !== "me"; });
     var remoteCount = remoteKeys.length;
 
-    if (remoteCount === 0) {
-      localTileHidden = false;
-    }
+    if (!stream) localTileHidden = false;
 
     var box = $("tiles");
     
@@ -598,13 +614,17 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         tiles[k].el.dataset.local = "true";
         var closeBtn = tiles[k].el.querySelector(".tile-hide");
         if (closeBtn) {
-          closeBtn.classList.toggle("hidden", !(remoteCount > 0 && !localTileHidden));
+          closeBtn.classList.toggle("hidden", localTileHidden || !stream);
         }
       }
     });
 
-    $("btnRestoreMe").classList.toggle("hidden", !(localTileHidden && !!stream && remoteCount > 0));
+    $("btnRestoreMe").classList.toggle("hidden", !(localTileHidden && !!stream));
+    $("phText").textContent = (localTileHidden && stream && visible.length === 0)
+      ? "Sua pré-visualização está oculta. Quem está assistindo continua vendo a sua tela normalmente. Clique em \"Mostrar minha tela\" para voltar a ver."
+      : PH_DEFAULT;
     $("ph").classList.toggle("hidden", visible.length > 0);
+    updateHideBtn();
     $("btnFull").disabled = (visible.length === 0);
     
     renderHeader();
@@ -705,8 +725,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       
       close.onclick = function(e) {
         e.stopPropagation();
-        localTileHidden = true;
-        layout();
+        setLocalHidden(true);
       };
       el.appendChild(close);
     }
@@ -799,6 +818,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     }
 
     $("btnSwitch").disabled = !sharing;
+    updateHideBtn();
     $("btnStop").disabled = !active;
     $("btnCopy").disabled = $("btnCopyCode").disabled = !roomCode;
     $("codeOut").value = roomCode;
@@ -868,6 +888,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   function stopShare(msg){
     if(stream){ stream.getTracks().forEach(function(t){t.stop()}); stream=null; }
     calls.forEach(function(c){try{c.close()}catch(e){}}); calls=[];
+    localTileHidden=false;
     removeTile("me");
     if(liveIncoming()===0) setStatus("Na sala",false);
     renderAll();
@@ -1189,7 +1210,8 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     });
     $("icoPlay").innerHTML = userPaused ? '<path d="M7 4l13 8-13 8z"/>' : '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>';
   };
-  $("btnRestoreMe").onclick=function(){ localTileHidden=false; layout(); };
+  $("btnRestoreMe").onclick=function(){ setLocalHidden(false); };
+  $("btnHideMe").onclick=function(){ setLocalHidden(!localTileHidden); };
   $("btnMute").onclick=function(){
     userMuted=!userMuted;
     remoteVideos().forEach(function(v){ v.muted=userMuted; });
@@ -1216,6 +1238,8 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       $("btnFull").click();
     } else if (k === "p") {
       $("btnPlay").click();
+    } else if (k === "h") {
+      $("btnHideMe").click();
     }
   });
 
