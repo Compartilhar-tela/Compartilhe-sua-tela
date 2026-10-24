@@ -6,6 +6,8 @@
 <title>Compartilhe sua tela</title>
 <meta name="description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
 <meta name="theme-color" content="#6d5df0">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' https://patient-math-9da9.brunosamuel1524.workers.dev https://0.peerjs.com wss://0.peerjs.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238e80ff'/%3E%3Cstop offset='1' stop-color='%235442e0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Crect x='14' y='17' width='36' height='24' rx='4' fill='none' stroke='white' stroke-width='4'/%3E%3Cpath d='M32 41v7M24 48h16' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -141,7 +143,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     Compartilha <small>AO VIVO</small>
   </div>
   <div class="search" role="search">
-    <input id="codeIn" maxlength="3" placeholder="Digite o código da sessão" aria-label="Código da sessão" autocomplete="off">
+    <input id="codeIn" maxlength="6" placeholder="Digite o código da sessão" aria-label="Código da sessão" autocomplete="off">
     <button id="btnJoin">Entrar</button>
   </div>
   <button class="cta" id="btnStart">+ Compartilhar tela</button>
@@ -156,7 +158,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         <div class="tiles n0" id="tiles"></div>
         <div class="ph" id="ph">
           <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
-          <span id="phText">Clique em Transmitir e escolha o que mostrar. A sala é criada na hora, com um código de 3 caracteres. Para entrar em uma sala, digite o código lá em cima.</span>
+          <span id="phText">Clique em Transmitir e escolha o que mostrar. A sala é criada na hora, com um código de 6 caracteres. Para entrar em uma sala, digite o código lá em cima.</span>
         </div>
         <button class="hidden" id="playBtn">▶ Toque para ver a tela</button>
         <span class="livebadge hidden" id="liveBadge">AO VIVO</span>
@@ -223,7 +225,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
 <script>
 (function(){
   var PREFIX = "compartilha-";
-  var ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  var ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", CODE_LEN = 6;
   var $ = function(id){return document.getElementById(id)};
   var peer = null, stream = null, calls = [], conns = [], active = false, gotStream = false, joinTimer = null;
   var roomCode = "", isCreator = false, myId = "", creatorId = "", myName = "Você", nameSeq = 1, creatorOpen = false;
@@ -235,8 +237,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   var CF_WORKER_URL = "https://patient-math-9da9.brunosamuel1524.workers.dev";
   var CF_QUOTA_GB = 1000;
   var MY_TURN_URLS = ["turn:standard.relay.metered.ca:80","turn:standard.relay.metered.ca:80?transport=tcp","turn:standard.relay.metered.ca:443","turns:standard.relay.metered.ca:443?transport=tcp"];
-  var MY_TURN_USER = "ada84929df5e11e4cf33466e";
-  var MY_TURN_PASS = "XVIFa5r6/j+1UbpT";
 
   var cfIce = null, cfAt = 0;
   var STUN = [
@@ -244,17 +244,15 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     {urls:"stun:stun1.l.google.com:19302"},
     {urls:"stun:global.stun.twilio.com:3478"}
   ];
-  var METERED = [];
-  if(MY_TURN_URLS.length && MY_TURN_USER && MY_TURN_PASS){
-    METERED.push({urls:MY_TURN_URLS, username:MY_TURN_USER, credential:MY_TURN_PASS});
-  }else{
-    METERED.push({urls:["turn:openrelay.metered.ca:80","turn:openrelay.metered.ca:443","turns:openrelay.metered.ca:443?transport=tcp"],
-      username:"openrelayproject", credential:"openrelayproject"});
-  }
-  var EXP_USER = "000000002108183971", EXP_PASS = "aKzJj7unhdMkH8vdxxYsD1pP9lM=", EXP_QUOTA_GB = 1000;
+  var EXP_URLS = ["turn:free.expressturn.com:3478?transport=udp","turn:free.expressturn.com:3478?transport=tcp","turns:free.expressturn.com:443?transport=tcp"];
+  var EXP_QUOTA_GB = 1000;
+  var METERED = [{urls:["turn:openrelay.metered.ca:80","turn:openrelay.metered.ca:443","turns:openrelay.metered.ca:443?transport=tcp"], username:"openrelayproject", credential:"openrelayproject"}];
   var EXPRESS = [];
-  if(EXP_USER && EXP_PASS){
-    EXPRESS.push({urls:["turn:free.expressturn.com:3478?transport=udp","turn:free.expressturn.com:3478?transport=tcp","turns:free.expressturn.com:443?transport=tcp"], username:EXP_USER, credential:EXP_PASS});
+  // Usuário e senha do ExpressTURN e do Metered ficam no Worker (secrets), não no site.
+  function setExtra(ex,me){
+    EXPRESS.length=0;
+    if(ex && ex.username && ex.credential) EXPRESS.push({urls:EXP_URLS, username:ex.username, credential:ex.credential});
+    if(me && me.username && me.credential) METERED.splice(0,METERED.length,{urls:MY_TURN_URLS, username:me.username, credential:me.credential});
   }
   var turnPick = null, pickP = null, pickAt = 0;
   function providers(){
@@ -304,7 +302,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   function readCfCache(){
     try{
       var o=JSON.parse(localStorage.getItem("telaja_cf")||"null");
-      if(o && o.list && Date.now()-o.at < 6*3600*1000) return o;
+      if(o && o.v===2 && o.list && Date.now()-o.at < 6*3600*1000) return o;
     }catch(e){}
     return null;
   }
@@ -313,7 +311,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     if(!force){
       if(cfIce && Date.now()-cfAt < 6*3600*1000) return;
       var c=readCfCache();
-      if(c){ cfIce=c.list; cfAt=c.at; quota=loadQuota(); renderQuota(); return; }
+      if(c){ cfIce=c.list; cfAt=c.at; setExtra(c.ex,c.me); quota=loadQuota(); renderQuota(); return; }
     }
     try{
       var ctl=new AbortController(), tm=setTimeout(function(){ ctl.abort(); },6000);
@@ -328,11 +326,11 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         if(sv.username){ o.username=sv.username; o.credential=sv.credential; }
         list.push(o);
       });
-      if(list.some(function(x){ return x.username; })){
-        cfIce=list; cfAt=Date.now();
-        try{ localStorage.setItem("telaja_cf",JSON.stringify({list:list,at:cfAt})); }catch(e){}
-        quota=loadQuota(); renderQuota();
-      }
+      setExtra(d.express,d.metered);
+      var okCf=list.some(function(x){ return x.username; });
+      if(okCf){ cfIce=list; cfAt=Date.now(); }
+      try{ localStorage.setItem("telaja_cf",JSON.stringify({v:2,list:okCf?list:[],at:Date.now(),ex:d.express,me:d.metered})); }catch(e){}
+      quota=loadQuota(); renderQuota();
     }catch(e){}
   }
 
@@ -618,7 +616,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
   function setStatus(text,on){ $("status").textContent=text; $("status").classList.toggle("on",!!on); $("liveBadge").classList.toggle("hidden",!on); }
   function randomCode(){
-    var a=new Uint32Array(3); crypto.getRandomValues(a);
+    var a=new Uint32Array(CODE_LEN); crypto.getRandomValues(a);
     return Array.prototype.map.call(a,function(n){return ALPHA[n%ALPHA.length]}).join("");
   }
   function baseUrl(){ return location.origin + location.pathname; }
@@ -627,6 +625,8 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     var ok=function(){flash(btn,"Copiado!")};
     if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok,ok); else ok();
   }
+  function cleanName(n){ return String(n==null?"":n).replace(/[\u0000-\u001f<>]/g,"").trim().slice(0,24) || "Pessoa"; }
+  function goodId(i){ return typeof i==="string" && /^[\w-]{1,64}$/.test(i); }
   function nameOf(id){ return names[id] || (members[id]&&members[id].name) || "Pessoa"; }
   function nextName(){ return "Pessoa "+(++nameSeq); }
   function sendTo(id,msg){ var m=members[id]; try{ if(m&&m.conn&&m.conn.open) m.conn.send(msg); }catch(e){} }
@@ -1039,7 +1039,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   async function join(raw,opts){
     opts=opts||{};
     var code=(raw||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
-    if(code.length!==3) return setMsg("O código tem 3 letras ou números.",true);
+    if(code.length!==CODE_LEN) return setMsg("O código tem "+CODE_LEN+" letras ou números.",true);
     var keep=null;
     if(opts.keepStream){ keep=stream; stream=null; }
     if(active) stopAll();
@@ -1121,18 +1121,18 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   function onData(conn,d){
     var id=conn.peer;
     if(d && typeof d==="object"){
-      if(d.t==="welcome" && !isCreator){
-        myName=d.name; names[id]=d.creatorName;
-        (members[id]||(members[id]={id:id})).name=d.creatorName;
-        (d.list||[]).forEach(function(e){
-          if(e.id===myId||e.id===creatorId) return;
-          names[e.id]=e.name;
+      if(d.t==="welcome" && !isCreator && id===creatorId){
+        myName=cleanName(d.name); names[id]=cleanName(d.creatorName);
+        (members[id]||(members[id]={id:id})).name=names[id];
+        (Array.isArray(d.list)?d.list.slice(0,50):[]).forEach(function(e){
+          if(!e || !goodId(e.id) || e.id===myId || e.id===creatorId) return;
+          names[e.id]=cleanName(e.name);
           if(members[e.id]&&members[e.id].conn) return;
           wireConn(peer.connect(e.id),true);
         });
         renderAll();
       }else if(d.t==="hi"){
-        names[id]=d.name; (members[id]||(members[id]={id:id})).name=d.name; renderAll();
+        names[id]=cleanName(d.name); (members[id]||(members[id]={id:id})).name=names[id]; renderAll();
       }
       return;
     }
@@ -1140,7 +1140,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     else if(d==="pause"||d==="resume"){
       calls.forEach(function(c){ if(c.peer===id){ c._paused=(d==="pause"); tuneCall(c); } });
     }
-    else if(d==="full"){ end("","Esta sala está cheia. Peça para quem criou aumentar o limite de pessoas.",true); }
+    else if(d==="full" && id===creatorId){ end("","Esta sala está cheia. Peça para quem criou aumentar o limite de pessoas.",true); }
     else if(d==="relay_full"||d==="relay_timeout"){
       dropIncoming(id);
       setMsg(d==="relay_full"
@@ -1358,7 +1358,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   $("btnCopyLink").onclick=function(){ copy(baseUrl()+"#"+roomCode,this); };
   function tryJoin(raw){
     var c=(raw||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
-    if(c.length!==3) return setMsg("O código tem 3 letras ou números.",true);
+    if(c.length!==CODE_LEN) return setMsg("O código tem "+CODE_LEN+" letras ou números.",true);
     if(active && !confirm(stream ? "Isso vai encerrar a sua transmissão e sair da sala atual. Continuar?" : "Isso vai sair da sala atual. Continuar?")) return;
     reconnects=0; join(raw);
   }
