@@ -79,6 +79,9 @@ button:hover:not(:disabled){filter:brightness(1.12)}
 .tiles.n1 .tag{display:none}
 .tile .stat{position:absolute;left:10px;top:10px;max-width:calc(100% - 56px);padding:4px 8px;border-radius:6px;background:rgba(5,6,15,.78);font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:5;pointer-events:none;display:none}
 .tile .stat.on{display:block}
+.tiles.n1 .tile .stat{display:none!important}
+.stage:fullscreen .tiles.n1 .tile .stat.on{display:block!important}
+.stat-top{margin:0 0 8px;font-size:13px;font-weight:600;color:var(--ink)}
 .tile-hide{position:absolute;right:8px;top:8px;z-index:15;width:28px;height:28px;padding:0;border:1px solid rgba(255,255,255,.4);border-radius:50%;background:rgba(9,11,24,.85);color:#fff;font-size:18px;font-weight:bold;line-height:1;display:grid;place-items:center;cursor:pointer;transition:background .2s,transform .1s}
 .tile-hide:hover{background:var(--red,#ff5a6a);border-color:transparent;transform:scale(1.08)}
 .ph{position:absolute;text-align:center;color:var(--muted);padding:24px;max-width:44ch;line-height:1.5}
@@ -148,6 +151,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   <div id="quotaWarn" class="warn hidden" role="alert"></div>
   <div class="main">
     <section class="col-main">
+      <div class="stat-top hidden" id="statTop"></div>
       <div class="stage" id="stage">
         <div class="tiles n0" id="tiles"></div>
         <div class="ph" id="ph">
@@ -547,6 +551,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       var ss=tr.getSettings();
       if(ss.width){ me.stat.textContent="Ao vivo · "+ss.width+"×"+ss.height+" · "+Math.round(ss.frameRate||0)+" fps"; me.stat.classList.add("on"); }
     }
+    syncTopStat();
     relayGuard();
     updateHostStatus(); renderMembers();
   }
@@ -589,6 +594,14 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       else if(!t.el.classList.contains("paused")){ t.video.play().catch(function(){}); }
     }
     layout();
+  }
+  function syncTopStat(){
+    var el=$("statTop"), txt="";
+    if($("tiles").classList.contains("n1")){
+      var k=Object.keys(tiles).filter(function(k){ return !(k==="me"&&localTileHidden); })[0], t=k&&tiles[k];
+      if(t&&t.stat.classList.contains("on")) txt=t.stat.textContent;
+    }
+    el.textContent=txt; el.classList.toggle("hidden",!txt);
   }
   function updateHideBtn(){
     var b = $("btnHideMe"); if(!b) return;
@@ -636,6 +649,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     updateHideBtn();
     $("btnFull").disabled = (visible.length === 0);
     
+    syncTopStat();
     renderHeader();
   }
 
@@ -1178,6 +1192,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         }catch(e){}
       }
       if(lives.length) setStatus("Ao vivo"+(lives.length>1?" · "+lives.length+" transmissões":""),true);
+      syncTopStat();
       renderMembers();
     };
     tick();
