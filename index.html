@@ -77,6 +77,8 @@ button:hover:not(:disabled){filter:brightness(1.12)}
 .tile-action-btn{background:none;border:0;padding:0;color:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;margin-left:4px;}
 .tile-action-btn:hover{color:var(--accent2);}
 .tiles.n1 .tag{display:none}
+.tile .stat{position:absolute;left:10px;top:10px;max-width:calc(100% - 56px);padding:4px 8px;border-radius:6px;background:rgba(5,6,15,.78);font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:5;pointer-events:none;display:none}
+.tile .stat.on{display:block}
 .tile-hide{position:absolute;right:8px;top:8px;z-index:15;width:28px;height:28px;padding:0;border:1px solid rgba(255,255,255,.4);border-radius:50%;background:rgba(9,11,24,.85);color:#fff;font-size:18px;font-weight:bold;line-height:1;display:grid;place-items:center;cursor:pointer;transition:background .2s,transform .1s}
 .tile-hide:hover{background:var(--red,#ff5a6a);border-color:transparent;transform:scale(1.08)}
 .ph{position:absolute;text-align:center;color:var(--muted);padding:24px;max-width:44ch;line-height:1.5}
@@ -540,6 +542,11 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         if(!!c._relay!==relay){ c._relay=relay; c._relaySince=relay?Date.now():0; tuneCall(c); }
       }catch(e){}
     }
+    var me=tiles.me, tr=stream&&stream.getVideoTracks()[0];
+    if(me&&tr){
+      var ss=tr.getSettings();
+      if(ss.width){ me.stat.textContent="Ao vivo · "+ss.width+"×"+ss.height+" · "+Math.round(ss.frameRate||0)+" fps"; me.stat.classList.add("on"); }
+    }
     relayGuard();
     updateHostStatus(); renderMembers();
   }
@@ -715,6 +722,9 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     el.appendChild(v);
     el.appendChild(pauseOverlay);
     el.appendChild(tag);
+    var stat = document.createElement("div");
+    stat.className = "stat";
+    el.appendChild(stat);
     
     if (key === "me") {
       el.dataset.local = "true";
@@ -733,7 +743,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     }
     
     $("tiles").appendChild(el);
-    tiles[key] = { el: el, video: v, tag: tag, tagText: tagText, netDot: netDot };
+    tiles[key] = { el: el, video: v, tag: tag, tagText: tagText, netDot: netDot, stat: stat };
     layout();
     return tiles[key];
   }
@@ -1160,10 +1170,14 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
             call._known=true; call._relay=viaRelay;
           }
           if(first){ lastDiag=pc.iceConnectionState+(kind?", "+kind:""); first=false; }
-          if(info&&info.frameWidth) lives.push(info.frameWidth+"×"+info.frameHeight+" · "+Math.round(info.framesPerSecond||0)+" fps"+(kind?" · "+kind:""));
+          if(info&&info.frameWidth){
+            var txt=info.frameWidth+"×"+info.frameHeight+" · "+Math.round(info.framesPerSecond||0)+" fps"+(kind?" · "+kind:"");
+            lives.push(txt);
+            var tl=tiles[ids[i]]; if(tl){ tl.stat.textContent="Ao vivo · "+txt; tl.stat.classList.add("on"); }
+          }
         }catch(e){}
       }
-      if(lives.length) setStatus("Ao vivo · "+lives[0]+(lives.length>1?" · "+lives.length+" transmissões":""),true);
+      if(lives.length) setStatus("Ao vivo"+(lives.length>1?" · "+lives.length+" transmissões":""),true);
       renderMembers();
     };
     tick();
