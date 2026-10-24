@@ -251,7 +251,12 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     METERED.push({urls:["turn:openrelay.metered.ca:80","turn:openrelay.metered.ca:443","turns:openrelay.metered.ca:443?transport=tcp"],
       username:"openrelayproject", credential:"openrelayproject"});
   }
-  function iceList(){ return STUN.concat(cfIce && cfIce.length ? cfIce : METERED); }
+  var EXP_USER = "000000002108183971", EXP_PASS = "aKzJj7unhdMkH8vdxxYsD1pP9lM=", EXP_QUOTA_GB = 1000;
+  var EXPRESS = [];
+  if(EXP_USER && EXP_PASS){
+    EXPRESS.push({urls:["turn:free.expressturn.com:3478?transport=udp","turn:free.expressturn.com:3478?transport=tcp","turns:free.expressturn.com:443?transport=tcp"], username:EXP_USER, credential:EXP_PASS});
+  }
+  function iceList(){ return STUN.concat(cfIce && cfIce.length ? cfIce : METERED, EXPRESS); }
 
   function readCfCache(){
     try{
@@ -323,7 +328,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
 
   var TURN_QUOTA_GB = 50;
-  function quotaGB(){ return cfIce ? CF_QUOTA_GB : TURN_QUOTA_GB; }
+  function quotaGB(){ return (cfIce ? CF_QUOTA_GB : TURN_QUOTA_GB) + (EXPRESS.length ? EXP_QUOTA_GB : 0); }
   function quotaKey(){ return cfIce ? "telaja_turn_cf" : "telaja_turn"; }
   var MAX_RELAY_VIEWERS = 0;
   var RELAY_MAX_MIN = 120;
