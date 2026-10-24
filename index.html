@@ -1200,7 +1200,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
 
   function applyBuffer(){
-    var ms=20;
+    var ms=0;
     Object.keys(incoming).forEach(function(id){
       var call=incoming[id];
       if(!call||!call.peerConnection) return;
