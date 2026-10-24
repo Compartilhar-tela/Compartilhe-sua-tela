@@ -786,7 +786,9 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       var r=document.createElement("span"); r.className="vkind";
       var out=calls.filter(function(x){ return x.peer===id; })[0], inc=incoming[id];
       var known=(out&&out._known)||(inc&&inc._known), relay=(out&&out._relay)||(inc&&inc._relay);
-      if(!known){ r.textContent="conectando…"; r.className+=" mut"; updateTileStatus(id, "bad"); }
+      var mc=members[id].conn;
+      if(!known && mc && mc.open && !out && !inc){ r.textContent="na sala"; r.className+=" mut"; }
+      else if(!known){ r.textContent="conectando…"; r.className+=" mut"; updateTileStatus(id, "bad"); }
       else if(relay){ r.textContent="via servidor"+(out&&out._relay&&out._kbps?" · "+String(out._kbps/1000).replace(".",",")+" Mbps":""); r.className+=" amb"; updateTileStatus(id, "relay"); }
       else { r.textContent="conexão direta"; r.className+=" grn"; updateTileStatus(id, "direct"); }
       row.appendChild(l); row.appendChild(r); box.appendChild(row);
@@ -1050,7 +1052,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
           if(e.id===myId||e.id===creatorId) return;
           names[e.id]=e.name;
           if(members[e.id]&&members[e.id].conn) return;
-          members[e.id]=members[e.id]||{id:e.id,name:e.name};
           wireConn(peer.connect(e.id),true);
         });
         renderAll();
