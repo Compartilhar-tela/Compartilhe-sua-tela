@@ -7,20 +7,21 @@
 <meta name="description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
 <meta name="theme-color" content="#6d5df0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238e80ff'/%3E%3Cstop offset='1' stop-color='%235442e0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Crect x='14' y='17' width='36' height='24' rx='4' fill='none' stroke='white' stroke-width='4'/%3E%3Cpath d='M32 41v7M24 48h16' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
-
-<!-- Open Graph / Redes Sociais (Forçando a URL com barra para padronizar o embed) -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Compartilhe sua tela">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:title" content="Compartilhe sua tela">
 <meta property="og:description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
-<meta property="og:url" content="https://compartilhar-tela.github.io/Compartilhe-sua-tela/">
-
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary">
+<meta property="og:url" content="https://compartilhar-tela.github.io/Compartilhar.tela/">
+<meta property="og:image" content="https://compartilhar-tela.github.io/Compartilhar.tela/preview.png?v=2">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Compartilhe sua tela: logo roxo com um monitor">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Compartilhe sua tela">
 <meta name="twitter:description" content="Mostre sua tela ao vivo para qualquer pessoa, direto no navegador. Sem cadastro e sem instalar nada.">
-
+<meta name="twitter:image" content="https://compartilhar-tela.github.io/Compartilhar.tela/preview.png?v=2">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +37,7 @@ button:hover:not(:disabled){filter:brightness(1.12)}
 :focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
 .chip select:focus-visible{outline:none;box-shadow:none}
 .hidden{display:none!important}
+/* barra de cima */
 .top{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:12px 24px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:20px}
 .brand .ico{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7a6bff,#5a49e0);display:grid;place-items:center}
@@ -46,6 +48,7 @@ button:hover:not(:disabled){filter:brightness(1.12)}
 .search input::placeholder{color:#6c7199}
 .search button{padding:0 22px;border-radius:0 999px 999px 0;border:1px solid var(--line);border-left:0;background:#1a1f3d;font-weight:600}
 .cta{padding:11px 20px;border-radius:999px;border:0;background:var(--accent);color:#fff;font-weight:700}
+/* conteúdo */
 .wrap{max-width:1360px;margin:0 auto;padding:24px;width:100%}
 .main{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
 .col-main{flex:1 1 640px;min-width:0}
@@ -102,6 +105,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
 .chip select:hover{border-color:rgba(138,125,255,.85)}
 .chip select:focus,.chip select:focus-visible{border:4px solid #8a7dff;outline:none;box-shadow:0 0 0 2px rgba(138,125,255,.18)}
 .chip select option{background:#20264a;color:var(--ink);padding:14px 20px;font-weight:600}
+/* coluna lateral */
 .card{padding:18px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
 .ctitle{font-weight:700;margin-bottom:12px}
 .lbl{font-size:13px;color:var(--muted);margin-bottom:6px}
@@ -175,7 +179,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         <label class="chip"><span>Resolução</span><select id="selRes"><option value="480">480p</option><option value="720" selected>720p</option></select></label>
         <label class="chip"><select id="selFps" aria-label="Fluidez"><option value="30">30 fps</option><option value="60" selected>60 fps</option></select></label>
         <label class="chip"><select id="selMode" aria-label="Modo"><option value="auto">Modo Automático</option><option value="game" selected>Modo Jogo</option><option value="text">Modo Texto</option></select></label>
-        <label class="chip"><span>Encoder (Hardware)</span><select id="selHardware"><option value="auto" selected>Automático</option><option value="gpu">Placa de Vídeo (GPU / NVENC)</option><option value="cpu">Processador (CPU)</option></select></label>
         <label class="chip"><span>Limite via servidor</span><select id="selRelay"><option value="2000">2 Mbps</option><option value="3000">3 Mbps</option><option value="4000" selected>4 Mbps</option><option value="6000">6 Mbps</option><option value="10000">10 Mbps</option><option value="0">Sem limite</option></select></label>
       </div>
     </section>
@@ -376,7 +379,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
         var m=l.match(/^a=rtpmap:(\d+) (VP8|VP9|H264|AV1)\//i); if(m) pts[m[1]]=true;
         var f=l.match(/^a=fmtp:(\d+) /); if(f) hasFmtp[f[1]]=true;
       });
-      var extra="x-google-min-bitrate=2500;x-google-start-bitrate=6000;x-google-max-bitrate=40000";
+      var extra="x-google-min-bitrate=1500;x-google-start-bitrate=4000;x-google-max-bitrate=30000";
       sec=false;
       lines.forEach(function(l){
         if(l.indexOf("m=")===0) sec=(l.indexOf("m=video")===0);
@@ -405,9 +408,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
       if(idx<0) return sdp;
       var parts=lines[idx].split(" "), head=parts.slice(0,3), pts=parts.slice(3), first=[], rest=[];
       pts.forEach(function(pt){
-        var hw=$("selHardware") ? $("selHardware").value : "auto";
-        var isTarget = (hw==="gpu") ? (codec[pt]==="H264") : (codec[pt]==="VP8" || codec[pt]==="VP9");
-        if(isTarget || codec[pt]==="H264"||(apt[pt]&&codec[apt[pt]]==="H264")) first.push(pt); else rest.push(pt);
+        if(codec[pt]==="H264"||(apt[pt]&&codec[apt[pt]]==="H264")) first.push(pt); else rest.push(pt);
       });
       if(!first.length) return sdp;
       lines[idx]=head.concat(first,rest).join(" ");
@@ -421,7 +422,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
   function qual(){
     var h=Math.min(720,+$("selRes").value), f=Math.min(60,+$("selFps").value), m=$("selMode").value, w=Math.round(h*16/9);
-    var kbps=Math.max(2500,Math.min(40000,Math.round(w*h*f*0.12/1000)));
+    var kbps=Math.max(1500,Math.min(30000,Math.round(w*h*f*0.09/1000)));
     return {h:h,w:w,f:f,mode:m,kbps:kbps};
   }
   function capConstraints(){
@@ -432,10 +433,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     };
   }
   function hintTrack(st){
-    try{
-      var md=qual().mode, hw=$("selHardware").value;
-      st.getVideoTracks()[0].contentHint = (hw==="gpu" || md==="game") ? "motion" : (md==="text" ? "detail" : "");
-    }catch(e){}
+    try{ var md=qual().mode; st.getVideoTracks()[0].contentHint = md==="game" ? "motion" : (md==="text" ? "detail" : ""); }catch(e){}
   }
   function describeCapture(){
     try{
@@ -445,7 +443,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
   function tuneCall(c){
     var pc=c&&c.peerConnection; if(!pc) return;
-    var q=qual(), kbps=q.kbps;
+    var q=qual(), kbps=30000;
     c._kbps=kbps;
     pc.getSenders().forEach(function(sn){
       if(!sn.track||sn.track.kind!=="video") return;
@@ -480,6 +478,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
   }
   document.addEventListener("visibilitychange",function(){ if(active&&document.visibilityState==="visible") keepAwake(true); });
   
+  // Reconexão Automática Silenciosa
   function keepSignal(pr){
     pr.on("disconnected", function(){
       if (!active || peer !== pr || pr.destroyed) return;
@@ -621,6 +620,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     v.playsInline = true;
     if (key === "me") v.muted = true;
     
+    // Duplo clique para Ecrã Inteiro Individual
     v.ondblclick = function(e) {
       e.stopPropagation();
       if (document.fullscreenElement) {
@@ -644,6 +644,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     tag.appendChild(netDot);
     tag.appendChild(tagText);
 
+    // Controlo de Volume Individual
     if (key !== "me") {
       var vol = document.createElement("input");
       vol.type = "range";
@@ -899,7 +900,6 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     wirePeer(peer);
     peer.on("open",function(id){
       myId=id; creatorId=id; roomCode=code; myName="Pessoa 1"; nameSeq=1; names[id]=myName;
-      history.replaceState(null,"",baseUrl()+"#"+code);
       clearInterval(hostStatsTimer); hostStatsTimer=setInterval(hostStats,3000);
       var t=getTile("me","Você"); t.video.srcObject=stream; t.video.muted=true;
       setMsg("Sala criada. Envie o código para quem vai entrar. Capturando "+describeCapture()+"."+(quotaFrac()>=1?" Atenção: a cota estimada do TURN acabou, então só conexões diretas vão funcionar.":""));
@@ -1179,6 +1179,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
     document.addEventListener(ev,function(){ lastAct=Date.now(); },{passive:true});
   });
 
+  // Atalhos de Teclado
   document.addEventListener("keydown", function(e) {
     if (["INPUT", "TEXTAREA", "SELECT"].indexOf(document.activeElement.tagName) !== -1) return;
     var k = e.key.toLowerCase();
@@ -1203,7 +1204,7 @@ h1{margin:16px 0 10px;font-size:22px;letter-spacing:-.01em}
 
   renderQuota();
   $("selRelay").onchange=function(){ calls.forEach(tuneCall); };
-  $("selRes").onchange=applyQuality; $("selFps").onchange=applyQuality; $("selMode").onchange=applyQuality; $("selHardware").onchange=applyQuality;
+  $("selRes").onchange=applyQuality; $("selFps").onchange=applyQuality; $("selMode").onchange=applyQuality;
   $("btnTurn").onclick=function(){ refreshCf(true).then(testTurn); };
   refreshCf().then(autoTest);
 
